@@ -52,7 +52,7 @@ namespace CheckFenix.Core
 
         }
 
-        public static IEnumerable<Capitulo> GetCapitulos(string urlFenix)
+        public static IEnumerable<Capitulo> GetCapitulosActuales(string urlFenix)
         {
             return GetCapitulos(new HtmlDocument().LoadUrl(urlFenix).DocumentNode);
         }

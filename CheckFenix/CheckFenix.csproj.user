@@ -9,7 +9,21 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="CapituloViewer.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="VisorCapitulos.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="CapituloViewer.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="MainWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="VisorCapitulos.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

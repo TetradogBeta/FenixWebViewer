@@ -28,39 +28,18 @@ namespace CheckFenix
         {
 
             InitializeComponent();
-            LoadCapitulos();
+            visorCapitulosActuales.Capitulos = CapitulosActuales;
+            visorCapitulosActuales.Refresh();
             KeyDown += (s, e) =>
             {
                 if (e.Key == Key.F5)
                 {
-                    LoadCapitulos();
+                    visorCapitulosActuales.Capitulos = CapitulosActuales;
+                    visorCapitulosActuales.Refresh();
                 }
             };
         }
-        public void LoadCapitulos()
-        {
-            Image img;
-            ugMain.Children.Clear();
-            foreach (Capitulo capitulo in Capitulo.GetCapitulos(URL))
-            {
-                img = new Image() { Source =new BitmapImage(capitulo.Picture) };
-                img.Tag = capitulo;
-                img.ToolTip = capitulo.Name;
-                img.MouseLeftButtonDown += (s, e) =>
-                {
-                    string urlMega = ((s as Image).Tag as Capitulo).GetLinks().Where(l => l.Contains("mega.nz")).FirstOrDefault();
-                    if (!string.IsNullOrEmpty(urlMega))
-                    {
-                        new Uri(urlMega).Abrir();
-                    }
-                };
-                img.MouseRightButtonDown += (s, e) =>
-                {
-                  ((s as Image).Tag as Capitulo).Parent.Pagina.Abrir();
-           
-                };
-                ugMain.Children.Add(img);
-            }
-        }
+        public IEnumerable<Capitulo> CapitulosActuales => Capitulo.GetCapitulosActuales(URL);
+
     }
 }
