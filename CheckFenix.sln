@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31321.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckFenix", "CheckFenix\CheckFenix.csproj", "{084E9373-7EA6-49C3-A173-09C84F16AD68}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckFenix.Core", "CheckFenix.Core\CheckFenix.Core.csproj", "{EECDA5C2-AB28-4E09-A25C-C4C03472C442}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{084E9373-7EA6-49C3-A173-09C84F16AD68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{084E9373-7EA6-49C3-A173-09C84F16AD68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{084E9373-7EA6-49C3-A173-09C84F16AD68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{084E9373-7EA6-49C3-A173-09C84F16AD68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EECDA5C2-AB28-4E09-A25C-C4C03472C442}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EECDA5C2-AB28-4E09-A25C-C4C03472C442}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EECDA5C2-AB28-4E09-A25C-C4C03472C442}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EECDA5C2-AB28-4E09-A25C-C4C03472C442}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D7679117-8F0D-45C7-8267-30F9F76ADA46}
+	EndGlobalSection
+EndGlobal
