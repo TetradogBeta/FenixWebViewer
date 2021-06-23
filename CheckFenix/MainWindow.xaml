@@ -5,6 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CheckFenix"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <UniformGrid x:Name="ugMain"/>
+        Title="Capitulos" Height="450" Width="800">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <UniformGrid x:Name="ugMain" Columns="3"/>
+    </ScrollViewer>
 </Window>

@@ -27,17 +27,25 @@ namespace CheckFenix
         public MainWindow()
         {
 
-    
             InitializeComponent();
             LoadCapitulos();
+            KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.F5)
+                {
+                    LoadCapitulos();
+                }
+            };
         }
         public void LoadCapitulos()
         {
             Image img;
+            ugMain.Children.Clear();
             foreach (Capitulo capitulo in Capitulo.GetCapitulos(URL))
             {
                 img = new Image() { Source =new BitmapImage(capitulo.Picture) };
                 img.Tag = capitulo;
+                img.ToolTip = capitulo.Name;
                 img.MouseLeftButtonDown += (s, e) =>
                 {
                     string urlMega = ((s as Image).Tag as Capitulo).GetLinks().Where(l => l.Contains("mega.nz")).FirstOrDefault();
@@ -45,6 +53,11 @@ namespace CheckFenix
                     {
                         new Uri(urlMega).Abrir();
                     }
+                };
+                img.MouseRightButtonDown += (s, e) =>
+                {
+                  ((s as Image).Tag as Capitulo).Parent.Pagina.Abrir();
+           
                 };
                 ugMain.Children.Add(img);
             }
