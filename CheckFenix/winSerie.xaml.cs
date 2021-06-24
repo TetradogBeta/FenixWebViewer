@@ -63,7 +63,7 @@ namespace CheckFenix
             }
             else
             {
-                tbFechaNextOFinalizado.Text = Serie.NextCapterDate;
+                tbFechaNextOFinalizado.Text = Serie.NextChapter.Value.ToLongDateString();
                 gFechaOFinalizado.Background = Brushes.OrangeRed;
             }
             if (Serie.Total > 0)

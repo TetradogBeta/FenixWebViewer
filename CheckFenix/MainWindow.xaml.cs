@@ -33,7 +33,6 @@ namespace CheckFenix
         Task initSeries,initAllSeries;
         public MainWindow()
         {
-
             InitializeComponent();
             Title = TITULO;
             initSeries = new Task(() => {  SeriesActuales.ToArray(); });
@@ -108,6 +107,7 @@ namespace CheckFenix
         {
             if (e.Key == Key.F5)
             {
+                HtmlDic.Clear();
                 tbMain_SelectionChanged();
             }
             else if (tbMain.SelectedIndex == ALLSERIESPAGE)
@@ -138,6 +138,7 @@ namespace CheckFenix
             Title = "Guardando Cache!";
             Capitulo.SaveCache();
             Serie.SaveCache();
+            HtmlDic.SaveCache();
            
         }
     }

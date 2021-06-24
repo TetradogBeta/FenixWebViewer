@@ -20,10 +20,8 @@ namespace CheckFenix.Core
         static Capitulo()
         {
             DicImagenes = new SortedList<string, Bitmap>();
-            if (!Directory.Exists(CacheFolder))
-                Directory.CreateDirectory(CacheFolder);
-            else
-            {
+            if (Directory.Exists(CacheFolder))
+            { 
                 //cargo el cache!
                 foreach (string item in Directory.GetFiles(CacheFolder))
                     DicImagenes.Add(Path.GetFileName(item), new Bitmap(item));
@@ -127,6 +125,10 @@ namespace CheckFenix.Core
         public static void SaveCache()
         {
             string path;
+            if (DicImagenes.Count > 0 && !Directory.Exists(CacheFolder))
+                Directory.CreateDirectory(CacheFolder);
+            else if (DicImagenes.Count == 0 && Directory.Exists(CacheFolder))
+                Directory.Delete(CacheFolder);
             foreach (var item in DicImagenes)
             {
                 try

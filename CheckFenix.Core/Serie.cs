@@ -23,9 +23,7 @@ namespace CheckFenix.Core
         {
             DicImagenes = new SortedList<string, Bitmap>();
             DicFavoritos = new SortedList<string, bool>();
-            if (!Directory.Exists(CacheFolder))
-                Directory.CreateDirectory(CacheFolder);
-            else
+            if (Directory.Exists(CacheFolder))
             {
                 //cargo el cache!
                 foreach (string item in Directory.GetFiles(CacheFolder))
@@ -89,6 +87,7 @@ namespace CheckFenix.Core
         public string Name { get; set; }
         public string Description { get; set; }
         public string NextCapterDate { get; set; }
+   
         public int Total { get; set; }
     
         public Capitulo this[int capitulo]
@@ -111,6 +110,7 @@ namespace CheckFenix.Core
                 return capiulos[capitulo];
             }
         }
+        public DateTime? NextChapter => !Finalizada ? DateTime.Parse(NextCapterDate) : default(DateTime);
         public bool Finalizada => string.IsNullOrEmpty(NextCapterDate);
 
         public IEnumerable<Capitulo> GetCapitulos()
@@ -232,6 +232,12 @@ namespace CheckFenix.Core
         public static void SaveCache()
         {
             string path;
+
+            if (DicImagenes.Count > 0 && !Directory.Exists(CacheFolder))
+                Directory.CreateDirectory(CacheFolder);
+            else if (DicImagenes.Count== 0 && Directory.Exists(CacheFolder))
+                Directory.Delete(CacheFolder);
+
             foreach (var item in DicImagenes)
             {
                 try
