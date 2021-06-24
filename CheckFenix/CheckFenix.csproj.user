@@ -12,7 +12,16 @@
     <Compile Update="CapituloViewer.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="SerieViewer.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="VisorCapitulos.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="VisorSeries.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="winSerie.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
@@ -23,7 +32,16 @@
     <Page Update="MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
+    <Page Update="SerieViewer.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="VisorCapitulos.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="VisorSeries.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="winSerie.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

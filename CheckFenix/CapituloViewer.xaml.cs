@@ -2,6 +2,7 @@
 using Gabriel.Cat.S.Extension;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -33,23 +34,22 @@ namespace CheckFenix
         public Capitulo Capitulo { get; set; }
         public void Refresh()
         {
-            imgCapitulo.Source = new BitmapImage(Capitulo.Picture);
+            imgCapitulo.SetImage(Capitulo.Image);
             imgCapitulo.ToolTip = Capitulo.Name;
             
         }
 
         private void imgCapitulo_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            string urlMega = Capitulo.GetLinks().Where(l => l.Contains("mega.nz")).FirstOrDefault();
-            if (!string.IsNullOrEmpty(urlMega))
+            if(!Capitulo.AbrirLink())
             {
-                new Uri(urlMega).Abrir();
+                MessageBox.Show("No hay un servidor para verlo...");
             }
         }
 
         private void imgCapitulo_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            Capitulo.Parent.Pagina.Abrir();
+            new winSerie(Capitulo.Parent).Show();
         }
     }
 }

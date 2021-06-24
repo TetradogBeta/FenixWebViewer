@@ -5,12 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CheckFenix"
         mc:Ignorable="d"
-        Title="Capitulos" Height="450" Width="800">
-    <TabControl>
-        <TabItem Header="Actuales">
+        Height="450" Width="800" KeyDown="Window_KeyDown" >
+    <TabControl x:Name="tbMain" SelectionChanged="tbMain_SelectionChanged">
+        <TabItem Header="Capitulos Actuales">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <local:VisorCapitulos x:Name="visorCapitulosActuales" TotalPage="100"/>
             </ScrollViewer>
+        </TabItem>
+        <TabItem Header="Series Actuales">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <local:VisorSeries x:Name="visorSeriesActuales" TotalPage="100"/>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="Todas las Series">
+            <local:VisorSeries x:Name="visorTodasLasSeries" />
         </TabItem>
     </TabControl>
 </Window>
