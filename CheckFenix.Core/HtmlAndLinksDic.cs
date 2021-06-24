@@ -20,7 +20,7 @@ namespace CheckFenix.Core
         static LlistaOrdenada<string, string> DicFinalizados { get; set; }//se guardan porque son inmutables
         static LlistaOrdenada<string, LlistaOrdenada<string>> DicCapitulos { get; set; }//los links pueden aparecer y desaparecer, tener opción de quitar para poder recargar
                                                                                         //si no va ninguno mirar de eliminarlos para poderlos recargar
-        static LlistaOrdenada<string, LlistaOrdenada<string>> DicCapitulosCaidos { get; set; }//ya sea informado o automatizado, se guardan mientras salgan en la web del capitulo, así no hay problemas
+        static LlistaOrdenada<string> DicCapitulosCaidos { get; set; }//ya sea informado o automatizado, se guardan mientras salgan en la web del capitulo, así no hay problemas
         static HtmlAndLinksDic()
         {
             DicDiaEmision = new LlistaOrdenada<string, string>();
@@ -28,27 +28,38 @@ namespace CheckFenix.Core
             DicPrimeraSemanaDeFinalizar = new LlistaOrdenada<string, KeyValuePair<DateTime, string>>();
             DicFinalizados = new LlistaOrdenada<string, string>();
             DicCapitulos = new LlistaOrdenada<string, LlistaOrdenada<string>>();
-            DicCapitulosCaidos = new LlistaOrdenada<string, LlistaOrdenada<string>>();
+            DicCapitulosCaidos = new LlistaOrdenada<string>();
 
             foreach (DayOfWeek dayOfWeek in Enum.GetValues(typeof(DayOfWeek)))
                 DicDiaNoEmision.Add(dayOfWeek, new LlistaOrdenada<string, string>());
 
             //cargo lo guardado
-           
+
         }
+        public static string GetHtmlServer(Uri urlPagina)
+        {
+            //html directo del servidor
+            return urlPagina.DownloadString();
+        }
+
         public static string GetHtml(Uri urlPagina)
         {
             //miro si existe y si no pues lo pongo donde toque
             return urlPagina.DownloadString();
         }
+        public static string GetHtml(Serie serie)
+        {//si no es necesario internet lo cojo del cache si esta
+            throw new NotImplementedException();
+        }
         public static void AddHtml(Serie serie, string html = default(string))
         {
             const int TOTALDIASPARAFINALIZAR = 7 * 3;
+
             DayOfWeek dayOfWeek;
-         
+
             if (Equals(html, default(string)))
             {
-                html = GetHtml(serie.Pagina);
+                html = GetHtmlServer(serie.Pagina);
             }
             if (serie.Finalizada)
             {
@@ -71,7 +82,7 @@ namespace CheckFenix.Core
                 if (DateTime.UtcNow.DayOfWeek == dayOfWeek)
                 {
                     //es el dia de la emision! solo guardar si tiene link a mega sino quiere decir que no está listo
-                    if (!Equals(serie.UltimoOrDefault,default(Capitulo)))
+                    if (!Equals(serie.UltimoOrDefault, default(Capitulo)))
                     {
 
                         if (GetLinks(serie.UltimoOrDefault).Any(l => l.Contains("mega.nz")))
@@ -96,21 +107,16 @@ namespace CheckFenix.Core
             if (!DicCapitulos.ContainsKey(capitulo.Pagina.AbsoluteUri))
             {
                 DicCapitulos.Add(capitulo.Pagina.AbsoluteUri, new LlistaOrdenada<string>());
-                DicCapitulosCaidos.Add(capitulo.Pagina.AbsoluteUri, new LlistaOrdenada<string>());
+
             }
             links = capitulo.GetLinksFromHtml();
-            DicCapitulos[capitulo.Pagina.AbsoluteUri].AddOrReplaceRange(links.Where(l=>!DicCapitulosCaidos[capitulo.Pagina.AbsoluteUri].ContainsKey(l)).ToList());
+            DicCapitulos[capitulo.Pagina.AbsoluteUri].AddOrReplaceRange(links.Where(l => !DicCapitulosCaidos.ContainsKey(l)).ToList());
 
-            return DicCapitulos[capitulo.Pagina.AbsoluteUri].Values.Where(l => !DicCapitulosCaidos[capitulo.Pagina.AbsoluteUri].ContainsKey(l));
+            return DicCapitulos[capitulo.Pagina.AbsoluteUri].Values.Where(l => !DicCapitulosCaidos.ContainsKey(l));
         }
-        public static void AddLinkCaido(Capitulo capitulo,string link)
+        public static void AddLinkCaido(string link)
         {
-            if (!DicCapitulosCaidos.ContainsKey(capitulo.Pagina.AbsoluteUri))
-            {
-                DicCapitulos.Add(capitulo.Pagina.AbsoluteUri, new LlistaOrdenada<string>());
-                DicCapitulosCaidos.Add(capitulo.Pagina.AbsoluteUri, new LlistaOrdenada<string>());
-            }
-            DicCapitulosCaidos[capitulo.Pagina.AbsoluteUri].AddOrReplace(link,link);
+            DicCapitulosCaidos.Add(link);
         }
 
     }

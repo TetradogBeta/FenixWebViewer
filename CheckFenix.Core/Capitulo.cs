@@ -22,7 +22,7 @@ namespace CheckFenix.Core
         {
             DicImagenes = new LlistaOrdenada<string, Bitmap>();
             if (Directory.Exists(CacheFolder))
-            { 
+            {
                 //cargo el cache!
                 foreach (string item in Directory.GetFiles(CacheFolder))
                     DicImagenes.Add(Path.GetFileName(item), new Bitmap(item));
@@ -68,29 +68,29 @@ namespace CheckFenix.Core
         }
         public IEnumerable<Comentario> GetComentarios(IReadComentario reader)
         {
-            return Comentario.GetComentarios(reader,Pagina);
+            return Comentario.GetComentarios(reader, Pagina);
         }
         public IEnumerable<string> GetLinksFromHtml()
         {
 
             string url;
-            string html = HtmlAndLinksDic.GetHtml(Pagina);
+            string html = HtmlAndLinksDic.GetHtmlServer(Pagina);
             Regex regex = new Regex(@"(?<=<iframe[^>]*?)(?:\s*width=[""'](?<width>[^""']+)[""']|\s*height=[""'](?<height>[^'""]+)[""']|\s*src=[""'](?<src>[^'""]+[""']))+[^>]*?>");
             Match match = regex.Match(html);
 
 
             while (match.Success)
             {
-                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value; 
+                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value;
                 match = match.NextMatch();
 
                 yield return url;
             }
 
         }
-        public bool AbrirLink()
+        public bool AbrirLink(string serverPreference = "mega.nz")
         {
-            string url = HtmlAndLinksDic.GetLinks(this).Where(l => l.Contains("mega.nz")).FirstOrDefault();
+            string url = HtmlAndLinksDic.GetLinks(this).Where(l => l.Contains(serverPreference)).FirstOrDefault();
             if (string.IsNullOrEmpty(url))
             {
                 url = HtmlAndLinksDic.GetLinks(this).FirstOrDefault();
@@ -114,16 +114,16 @@ namespace CheckFenix.Core
         public static Capitulo FromUrl(Uri urlVisionado)
         {
             Capitulo capitulo = new Capitulo() { Pagina = urlVisionado };
-            HtmlDocument docUrl = HtmlAndLinksDic.GetHtmlCapitulo(urlVisionado);
+            HtmlDocument docUrl = new HtmlDocument().LoadString(HtmlAndLinksDic.GetHtml(urlVisionado));
             HtmlNode nodoName = docUrl.GetByTagName("h1").FirstOrDefault();
 
+            if (!Equals(nodoName, default(HtmlNode)))
+                capitulo.Name = nodoName.InnerText;
 
-            capitulo.Name = nodoName.InnerText;
-
-            if(Equals(capitulo.Parent.UltimoOrDefault,default(Capitulo)))
+            if (Equals(capitulo.Parent.UltimoOrDefault, default(Capitulo)))
                 capitulo.Picture = capitulo.Parent.Picture;
             else
-                 capitulo.Picture = capitulo.Parent.UltimoOrDefault.Picture;
+                capitulo.Picture = capitulo.Parent.UltimoOrDefault.Picture;
 
             return capitulo;
         }
@@ -144,7 +144,8 @@ namespace CheckFenix.Core
                     if (!File.Exists(path))
                         item.Value.Save(path);
                 }
-                catch {
+                catch
+                {
                     System.Diagnostics.Debugger.Break();
                 }
             }

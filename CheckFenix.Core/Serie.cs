@@ -138,7 +138,7 @@ namespace CheckFenix.Core
              <meta name="description" content='ME CAGO EN LA CONCHA PELUDA DE LA MADRE DEL JAPONÉS QUE SE LE OCURRIÓ EMITIR ESTA MADRE A LAS 4AM EN LATINO AMÉRICA DOS AÑOS SEGUIDOS. 
                 PD: Última temporada de NNT.' />
              */
-            HtmlDocument pagina =HtmlAndLinksDic.GetHtmlSerie(Pagina);
+            HtmlDocument pagina =new HtmlDocument().LoadString(HtmlAndLinksDic.GetHtmlServer(Pagina));
             HtmlNode nodoNombre = pagina.GetByTagName("meta").Where(m =>!Equals(m.Attributes["name"],default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
             HtmlNode nodoDesc= pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
             HtmlNode nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
@@ -150,7 +150,7 @@ namespace CheckFenix.Core
         public void Reload()
         {
             //actualiza el total,finalizada y el next
-            HtmlDocument pagina = HtmlAndLinksDic.GetHtmlSerie(Pagina);
+            HtmlDocument pagina =new HtmlDocument().LoadString( HtmlAndLinksDic.GetHtml(this));
             HtmlNode nodoFecha= pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Próximo")).FirstOrDefault();
             HtmlNode nodoTotal = pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Episodios:")).FirstOrDefault();
 
@@ -169,7 +169,7 @@ namespace CheckFenix.Core
             bool estaEnParrilla = !Equals(ultimo, default);
             if (estaEnParrilla)
             {
-               estaEnParrilla= HtmlAndLinksDic.GetHtml(ultimo.Pagina).Contains(ultimo.Pagina.AbsoluteUri);
+               estaEnParrilla= HtmlAndLinksDic.GetHtmlServer(ultimo.Pagina).Contains(ultimo.Pagina.AbsoluteUri);
             }
             return estaEnParrilla;
         }
@@ -216,7 +216,9 @@ namespace CheckFenix.Core
             int paginaActual = 1;
             do
             {
-                nodosSeries = HtmlAndLinksDic.GetHtmlSerie(new Uri(BASEURL + paginaActual)).GetByClass(CLASE).ToArray();
+                nodosSeries =new HtmlDocument().LoadString(HtmlAndLinksDic.GetHtml(new Uri(BASEURL + paginaActual)))
+                                               .GetByClass(CLASE).ToArray();
+
                 for (int i = 0; i < nodosSeries.Length; i++)
                 {
                     yield return new Serie(nodosSeries[i]);
