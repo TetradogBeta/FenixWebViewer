@@ -21,9 +21,14 @@ namespace CheckFenix
     /// </summary>
     public partial class SerieViewer : UserControl
     {
+        static ImageSource ImgOn = Resource.corazonOn.ToImageSource();
+        static ImageSource ImgOff = Resource.corazonOff.ToImageSource();
         public SerieViewer()
         {
             InitializeComponent();
+            
+            btnFavorito.ImgOn = ImgOn.Clone();
+            btnFavorito.ImgOff = ImgOff.Clone();
         }
         public SerieViewer(Serie serie):this()
         {
@@ -35,11 +40,18 @@ namespace CheckFenix
         {
             imgSerie.SetImage(Serie.Image);
             imgSerie.ToolTip = Serie.Name;
+            btnFavorito.EstadoOn = Serie.IsFavorito;
         }
 
         private void imgSerie_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             new winSerie(Serie).Show();
+        }
+
+        private void btnFavorito_SwitchChanged(object sender, bool e)
+        {
+            //guardo el favorito
+            Serie.IsFavorito = e;
         }
     }
 }

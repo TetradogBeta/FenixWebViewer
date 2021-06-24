@@ -4,7 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:CheckFenix"
+             xmlns:wpf="clr-namespace:Gabriel.Cat.Wpf;assembly=Gabriel.Cat.S.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Image x:Name="imgSerie" MouseLeftButtonDown="imgSerie_MouseLeftButtonDown"/>
+    <Grid>
+    <Image x:Name="imgSerie" MouseLeftButtonDown="imgSerie_MouseLeftButtonDown" MouseRightButtonDown="imgSerie_MouseLeftButtonDown"/>
+        <wpf:SwitchImg x:Name="btnFavorito"  Height="50" Width="50" SwitchChanged="btnFavorito_SwitchChanged"  VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
+    </Grid>
 </UserControl>

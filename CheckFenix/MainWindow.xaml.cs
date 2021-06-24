@@ -28,45 +28,68 @@ namespace CheckFenix
         const int SERIESACTUALESPAGE = 1;
         const int ALLSERIESPAGE = 2;
         const string CARGANDO = "Cargando";
-        const string TITULO = "AnimeFenix Desktop 1.1";
+        const string TITULO = "AnimeFenix Desktop 1.3";
+
+        Task initSeries,initAllSeries;
         public MainWindow()
         {
 
             InitializeComponent();
             Title = TITULO;
-
+            initSeries = new Task(() => {  SeriesActuales.ToArray(); });
+            initSeries.Start();
+            initAllSeries = new Task(() => { AllSeries.Take(visorTodasLasSeries.TotalPage*3).ToArray();  });
+            initAllSeries.Start();
         }
 
 
 
         public IEnumerable<Capitulo> CapitulosActuales => Capitulo.GetCapitulosActuales(URL);
-        public IEnumerable<Serie> SeriesActuales => CapitulosActuales.Select(s => s.Parent).Distinct();
-
+        public IEnumerable<Serie> SeriesActuales
+        {
+            get
+            {
+                SortedList<string, string> dic = new SortedList<string, string>();
+                return CapitulosActuales.Select(s => s.Parent).Where(c =>
+                {
+                    bool exist = dic.ContainsKey(c.Name);
+                    if (!exist)
+                        dic.Add(c.Name, c.Name);
+                    return !exist;
+                });
+            }
+        }
         public IEnumerable<Serie> AllSeries => Serie.GetAllSeries();
 
 
 
-        private void tbMain_SelectionChanged(object sender=null, SelectionChangedEventArgs e=null)
+        private void tbMain_SelectionChanged(object sender = null, SelectionChangedEventArgs e = null)
         {
+
             switch (tbMain.SelectedIndex)
             {
                 case CAPITULOSACTUALESPAGE:
                     visorCapitulosActuales.Capitulos = CapitulosActuales;
                     Title = CARGANDO;
                     visorCapitulosActuales.Refresh().ContinueWith(AcabaDeCargar());
+
                     break;
                 case SERIESACTUALESPAGE:
                     visorSeriesActuales.Series = SeriesActuales;
                     Title = CARGANDO;
+                    initSeries.Wait();
                     visorSeriesActuales.Refresh().ContinueWith(AcabaDeCargar());
+
+
                     break;
                 case ALLSERIESPAGE:
+
                     visorTodasLasSeries.Series = AllSeries;
                     Title = CARGANDO;
+                    initAllSeries.Wait();
                     visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
                     break;
             }
-
 
         }
 
@@ -77,7 +100,7 @@ namespace CheckFenix
         }
         async Task AcabarTask()
         {
-            Action act=()=> Title = TITULO;
+            Action act = () => Title = TITULO;
             await Dispatcher.BeginInvoke(act);
         }
 
@@ -95,8 +118,8 @@ namespace CheckFenix
                     {
                         visorTodasLasSeries.Page--;
                         Title = CARGANDO;
-                         visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
-                       
+                        visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
+
                     }
                 }
                 else if (e.Key.Equals(Key.Down))
@@ -106,6 +129,16 @@ namespace CheckFenix
                     visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
                 }
             }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Title = "Guardando Favoritos!";
+            Serie.SaveFavoritos();
+            Title = "Guardando Cache!";
+            Capitulo.SaveCache();
+            Serie.SaveCache();
+           
         }
     }
 }

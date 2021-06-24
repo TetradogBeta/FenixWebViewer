@@ -11,46 +11,24 @@ using System.Net;
 
 namespace CheckFenix.Core
 {
-    public static class HtmlDic
-    {
-        public const string URLANIMEFENIX = "https://www.animefenix.com/";
-        public static string CacheFolder = "CacheHtml";
-        public static TimeSpan TiempoMinimoRefresh = TimeSpan.FromMinutes(5);
-        static SortedList<string, KeyValuePair<long, string>> DicHtml { get; set; } = new SortedList<string, KeyValuePair<long, string>>();
-        public static HtmlDocument GetHtml(Uri url)
-        {
-
-            return new HtmlDocument().LoadString(GetString(url));
-        }
-        public static string GetString(Uri url)
-        {
-            if (DicHtml.ContainsKey(url.AbsoluteUri))
-            {
-                if (DateTime.Now - new DateTime(DicHtml[url.AbsoluteUri].Key) > TiempoMinimoRefresh)
-                    DicHtml.Remove(url.AbsoluteUri);
-            }
-            if (!DicHtml.ContainsKey(url.AbsoluteUri))
-            {
-                DicHtml.Add(url.AbsoluteUri, new KeyValuePair<long, string>(DateTime.Now.Ticks, url.DownloadString()));
-            }
-            return DicHtml[url.AbsoluteUri].Value;
-        }
-        public static void SaveCache()
-        {
-            Uri urlAnimeFenix = new Uri(URLANIMEFENIX);
-
-            foreach (var item in DicHtml)
-            {
-             File.WriteAllText(item.Value.Value,System.IO.Path.Combine(CacheFolder, new Uri(item.Key).MakeRelativeUri(urlAnimeFenix).ToString() + ".html"));
-            }
-        }
-    }
     public class Capitulo
     {
         public static string CacheFolder = "CacheCapitulos";
-        static SortedList<string, Bitmap> DicImagenes { get; set; } = new SortedList<string, Bitmap>();
+        static SortedList<string, Bitmap> DicImagenes { get; set; }
 
         Serie parent;
+        static Capitulo()
+        {
+            DicImagenes = new SortedList<string, Bitmap>();
+            if (!Directory.Exists(CacheFolder))
+                Directory.CreateDirectory(CacheFolder);
+            else
+            {
+                //cargo el cache!
+                foreach (string item in Directory.GetFiles(CacheFolder))
+                    DicImagenes.Add(Path.GetFileName(item), new Bitmap(item));
+            }
+        }
         public Capitulo() { }
         public Capitulo(HtmlNode nodeDiv)
         {
@@ -65,9 +43,10 @@ namespace CheckFenix.Core
         {
             get
             {
-                if (!DicImagenes.ContainsKey(Picture.AbsoluteUri))
-                    DicImagenes.Add(Picture.AbsoluteUri, Picture.GetBitmap().Escala(0.25f));
-                return DicImagenes[Picture.AbsoluteUri];
+                string url = Path.GetFileName(Picture.AbsoluteUri);
+                if (!DicImagenes.ContainsKey(url))
+                    DicImagenes.Add(url, Picture.GetBitmap().Escala(0.25f));
+                return DicImagenes[url];
             }
         }
         public Uri Pagina { get; set; }
@@ -88,11 +67,16 @@ namespace CheckFenix.Core
                 return parent;
             }
         }
+        public IEnumerable<Comentario> GetComentarios(IReadComentario reader)
+        {
+
+            return Comentario.GetComentarios(reader,Pagina);
+        }
         public IEnumerable<string> GetLinks()
         {
 
             string url;
-            string html = HtmlDic.GetString(Pagina);
+            string html = HtmlDic.GetStringCapitulo(Pagina);
             Regex regex = new Regex(@"(?<=<iframe[^>]*?)(?:\s*width=[""'](?<width>[^""']+)[""']|\s*height=[""'](?<height>[^'""]+)[""']|\s*src=[""'](?<src>[^'""]+[""']))+[^>]*?>");
             Match match = regex.Match(html);
 
@@ -131,7 +115,7 @@ namespace CheckFenix.Core
         public static Capitulo FromUrl(Uri urlVisionado)
         {
             Capitulo capitulo = new Capitulo() { Pagina = urlVisionado };
-            HtmlDocument docUrl = HtmlDic.GetHtml(urlVisionado);
+            HtmlDocument docUrl = HtmlDic.GetHtmlCapitulo(urlVisionado);
             HtmlNode nodoName = docUrl.GetByTagName("h1").FirstOrDefault();
 
 
@@ -142,11 +126,18 @@ namespace CheckFenix.Core
         }
         public static void SaveCache()
         {
-            Uri urlAnimeFenix = new Uri(HtmlDic.URLANIMEFENIX);
-
+            string path;
             foreach (var item in DicImagenes)
             {
-                item.Value.Save(System.IO.Path.Combine(CacheFolder, new Uri(item.Key).MakeRelativeUri(urlAnimeFenix).ToString() + ".jpg"), System.Drawing.Imaging.ImageFormat.Jpeg);
+                try
+                {
+                    path = Path.Combine(CacheFolder, item.Key);
+                    if (!File.Exists(path))
+                        item.Value.Save(path);
+                }
+                catch {
+                    System.Diagnostics.Debugger.Break();
+                }
             }
         }
     }

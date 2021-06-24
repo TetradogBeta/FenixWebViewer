@@ -19,6 +19,7 @@ namespace CheckFenix.Core
     {
         public static string DownloadString(string url)
         {
+          
             return new WebClient().DownloadString(url);
         }
         public static HtmlDocument LoadUrl(this HtmlDocument document, Uri url)

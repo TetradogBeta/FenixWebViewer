@@ -15,4 +15,5 @@ namespace Gabriel.Cat.S.Extension
            return new Bitmap(responseStream);
         }
     }
+
 }

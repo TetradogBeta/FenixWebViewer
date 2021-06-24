@@ -4,19 +4,44 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace CheckFenix.Core
 {
     public class Serie:IComparable,IComparable<Serie>,IEqualityComparer<Serie>
     {
         public static string CacheFolder = "CacheSeries";
-        static SortedList<string, Bitmap> DicImagenes { get; set; } = new SortedList<string, Bitmap>();
+        public static string FavoriteFile = "Favoritos.txt";
+        static SortedList<string, Bitmap> DicImagenes { get; set; } 
+        static SortedList<string,bool> DicFavoritos { get; set; }
         SortedList<int, Capitulo> capiulos;
+        Semaphore smDic;
+        static Serie()
+        {
+            DicImagenes = new SortedList<string, Bitmap>();
+            DicFavoritos = new SortedList<string, bool>();
+            if (!Directory.Exists(CacheFolder))
+                Directory.CreateDirectory(CacheFolder);
+            else
+            {
+                //cargo el cache!
+                foreach (string item in Directory.GetFiles(CacheFolder))
+                    DicImagenes.Add(Path.GetFileName(item), new Bitmap(item));
+
+            }
+            if (File.Exists(FavoriteFile))
+            {
+                foreach (string url in File.ReadAllLines(FavoriteFile))
+                    DicFavoritos.Add(url, true);
+            }
+        }
         public Serie()
         {
             capiulos = new SortedList<int, Capitulo>();
+            smDic = new Semaphore(1, 1);
         }
         public Serie(HtmlNode nodoSerie) : this()
         {
@@ -34,9 +59,31 @@ namespace CheckFenix.Core
         {
             get
             {
-                if (!DicImagenes.ContainsKey(Picture.AbsoluteUri))
-                    DicImagenes.Add(Picture.AbsoluteUri,Picture.GetBitmap().Escala(0.5f));
-                return DicImagenes[Picture.AbsoluteUri];
+                Bitmap bmp;
+                string url = Path.GetFileName(Picture.AbsoluteUri);
+                smDic.WaitOne();
+                if (!DicImagenes.ContainsKey(url))
+                    DicImagenes.Add(url, Picture.GetBitmap().Escala(0.5f));
+                bmp= DicImagenes[url];
+                smDic.Release();
+                return bmp;
+            }
+        }
+        public bool IsFavorito
+        {
+            get => DicFavoritos.ContainsKey(Pagina.AbsoluteUri);
+            set
+            {
+                if (value)
+                {
+                    if (!DicFavoritos.ContainsKey(Pagina.AbsoluteUri))
+                        DicFavoritos.Add(Pagina.AbsoluteUri, true);
+                }
+                else
+                {
+                    if (DicFavoritos.ContainsKey(Pagina.AbsoluteUri))
+                        DicFavoritos.Remove(Pagina.AbsoluteUri);
+                }
             }
         }
         public string Name { get; set; }
@@ -54,11 +101,13 @@ namespace CheckFenix.Core
                 {
                     throw new CapituloNoEncontradoException(Finalizada);
                 }
+                smDic.WaitOne();
                 if (!capiulos.ContainsKey(capitulo))
                 {
                     //lo cargo
                     capiulos.Add(capitulo, Capitulo.FromUrl(new Uri($"{Pagina.AbsoluteUri.Replace(HtmlDic.URLANIMEFENIX, HtmlDic.URLANIMEFENIX + "ver/")}-{capitulo}")));
                 }
+                smDic.Release();
                 return capiulos[capitulo];
             }
         }
@@ -69,10 +118,15 @@ namespace CheckFenix.Core
             for (int i = 1; i <= Total; i++)
                 yield return this[i];
         }
+        public IEnumerable<Comentario> GetComentarios(IReadComentario reader)
+        {
+         
+            return Comentario.GetComentarios(reader,Pagina);
+        }
         public override bool Equals(object obj)
         {
             Serie serie = obj as Serie;
-            return !Equals(serie, default(Serie)) && Pagina.Equals(serie.Pagina);
+            return !Equals(serie, default(Serie)) && Name.Equals(serie.Name);
         }
         private void LoadNameAndDesc()
         {
@@ -83,7 +137,7 @@ namespace CheckFenix.Core
              <meta name="description" content='ME CAGO EN LA CONCHA PELUDA DE LA MADRE DEL JAPONÉS QUE SE LE OCURRIÓ EMITIR ESTA MADRE A LAS 4AM EN LATINO AMÉRICA DOS AÑOS SEGUIDOS. 
                 PD: Última temporada de NNT.' />
              */
-            HtmlDocument pagina =HtmlDic.GetHtml(Pagina);
+            HtmlDocument pagina =HtmlDic.GetHtmlSerie(Pagina);
             HtmlNode nodoNombre = pagina.GetByTagName("meta").Where(m =>!Equals(m.Attributes["name"],default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
             HtmlNode nodoDesc= pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
             HtmlNode nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
@@ -95,7 +149,7 @@ namespace CheckFenix.Core
         public void Reload()
         {
             //actualiza el total,finalizada y el next
-            HtmlDocument pagina = HtmlDic.GetHtml(Pagina);
+            HtmlDocument pagina = HtmlDic.GetHtmlSerie(Pagina);
             HtmlNode nodoFecha= pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Próximo")).FirstOrDefault();
             HtmlNode nodoTotal = pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Episodios:")).FirstOrDefault();
 
@@ -107,14 +161,8 @@ namespace CheckFenix.Core
 
             Total = int.Parse(nodoTotal.NextSibling.OuterHtml);
         }
-        public static Serie FromUrl(Uri urlSerie)
-        {
-            Serie serie = new Serie();
-            serie.Pagina = urlSerie;
-            serie.LoadNameAndDesc();
-            serie.Reload();
-            return serie;
-        }
+       
+
         int IComparable.CompareTo(object obj)
         {
             return ICompareTo(obj as Serie);
@@ -138,7 +186,14 @@ namespace CheckFenix.Core
         {
             return obj.GetHashCode();
         }
-
+        public static Serie FromUrl(Uri urlSerie)
+        {
+            Serie serie = new Serie();
+            serie.Pagina = urlSerie;
+            serie.LoadNameAndDesc();
+            serie.Reload();
+            return serie;
+        }
         public static IEnumerable<Serie> GetAllSeries()
         {
             //
@@ -150,7 +205,7 @@ namespace CheckFenix.Core
             int paginaActual = 1;
             do
             {
-                nodosSeries = HtmlDic.GetHtml(new Uri(BASEURL + paginaActual)).GetByClass(CLASE).ToArray();
+                nodosSeries = HtmlDic.GetHtmlSerie(new Uri(BASEURL + paginaActual)).GetByClass(CLASE).ToArray();
                 for (int i = 0; i < nodosSeries.Length; i++)
                 {
                     yield return new Serie(nodosSeries[i]);
@@ -161,13 +216,33 @@ namespace CheckFenix.Core
             } while (nodosSeries.Length > 0);
 
         }
+        public static void SaveFavoritos()
+        {
+            string pathBack = FavoriteFile + ".bak";
+
+            if (File.Exists(pathBack))
+                File.Delete(pathBack);
+
+            if (File.Exists(FavoriteFile))
+            {
+                File.Move(FavoriteFile, pathBack);
+            }
+            File.WriteAllLines(FavoriteFile, DicFavoritos.Where(p => p.Value).Select(p => p.Key));
+        }
         public static void SaveCache()
         {
-            Uri urlAnimeFenix = new Uri(HtmlDic.URLANIMEFENIX);
-
-            foreach(var item in DicImagenes)
+            string path;
+            foreach (var item in DicImagenes)
             {
-                item.Value.Save(System.IO.Path.Combine(CacheFolder, new Uri(item.Key).MakeRelativeUri(urlAnimeFenix).ToString() + ".jpg"), System.Drawing.Imaging.ImageFormat.Jpeg);
+                try
+                {
+                    path = Path.Combine(CacheFolder, item.Key);
+                    if(!File.Exists(path))
+                        item.Value.Save(path);
+                }
+                catch {
+                    System.Diagnostics.Debugger.Break();
+                }
             }
         }
 

@@ -3,33 +3,42 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:CheckFenix"
         mc:Ignorable="d"
-        Title="Serie" Height="450" Width="800">
+        Title="Serie" MinHeight="317" MinWidth="636.7" Height="317" Width="636.7">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*"/>
-            <ColumnDefinition Width="7*"/>
+            <ColumnDefinition/>
             <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="7*"/>
-                <RowDefinition Height="4*"/>
+                <RowDefinition/>
+                <RowDefinition Height="50"/>
             </Grid.RowDefinitions>
             <Image x:Name="imgSerie"/>
-            <ScrollViewer  Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <TextBlock x:Name="tbDesc" TextWrapping="Wrap"/>
-            </ScrollViewer>
+            <Grid x:Name="gFechaOFinalizado" Grid.Row="1">
+                <Viewbox >
+                    <TextBlock x:Name="tbFechaNextOFinalizado" Foreground = "White"/>
+                </Viewbox>
+            </Grid>
         </Grid>
-        <ListBox x:Name="lstCapitulos" Grid.Column="1" SelectionChanged="lstCapitulos_SelectionChanged"/>
-        <Grid Grid.Column="2">
-            <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition Height="30"/>
-            </Grid.RowDefinitions>
-        <ListBox x:Name="lstLinks"  SelectionChanged="lstLinks_SelectionChanged"/>
-            <TextBlock Text="Recuerda que los links pueden estar caidos!" Grid.Row="1" TextWrapping="Wrap" Foreground="Tomato"/>
-        </Grid>
+        <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TextBlock x:Name="tbDesc" TextWrapping="Wrap" FontSize="21"/>
+                </ScrollViewer>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <ListBox x:Name="lstCapitulos" FontSize="21" SelectionChanged="lstCapitulos_SelectionChanged"/>
+                <ListBox x:Name="lstLinks" FontSize="21" Grid.Column="1"   SelectionChanged="lstLinks_SelectionChanged" ToolTip="Recuerda que los links pueden estar caidos!"/>
+                </Grid>
+            </Grid>
     </Grid>
 </Window>

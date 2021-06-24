@@ -37,12 +37,15 @@ namespace CheckFenix
         public int Page { get; set; }
         public async Task Refresh()
         {
-  
+            IEnumerable<Serie> series = Series.Skip(Page * TotalPage).Take(TotalPage);
+
             ugSeries.Children.Clear();
-            foreach(Serie serie in Series.Skip(Page * TotalPage).Take(TotalPage))
+            foreach (Serie serie in series)
             {
                 ugSeries.Children.Add(new SerieViewer(serie));
             }
+
+
         }
 
 

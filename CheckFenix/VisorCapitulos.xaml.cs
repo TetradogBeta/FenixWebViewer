@@ -32,11 +32,14 @@ namespace CheckFenix
         public int Page { get; set; }
         public async Task Refresh()
         {
+            IEnumerable<Capitulo> capitulos = Capitulos.Skip(Page * TotalPage).Take(TotalPage);
+
             ugCapitulos.Children.Clear();
-            foreach(Capitulo capitulo in Capitulos.Skip(Page*TotalPage).Take(TotalPage))
+            foreach (Capitulo capitulo in capitulos)
             {
                 ugCapitulos.Children.Add(new CapituloViewer(capitulo));
             }
+
         }
     }
 }
