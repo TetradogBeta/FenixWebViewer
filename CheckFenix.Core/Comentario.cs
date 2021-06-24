@@ -1,4 +1,5 @@
 ﻿using Gabriel.Cat.S.Extension;
+using Gabriel.Cat.S.Utilitats;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace CheckFenix.Core
 {
     public class Comentario
     {
-        static SortedList<string, Bitmap> DicPic = new SortedList<string, Bitmap>();
+        static LlistaOrdenada<string, Bitmap> DicPic = new LlistaOrdenada<string, Bitmap>();
         public Comentario() { }
         public Comentario(HtmlNode nodo)
         {

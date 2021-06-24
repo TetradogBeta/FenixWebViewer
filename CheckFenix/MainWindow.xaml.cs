@@ -23,7 +23,6 @@ namespace CheckFenix
     /// </summary>
     public partial class MainWindow : Window
     {
-        const string URL = "https://www.animefenix.com/";
         const int CAPITULOSACTUALESPAGE = 0;
         const int SERIESACTUALESPAGE = 1;
         const int ALLSERIESPAGE = 2;
@@ -43,7 +42,7 @@ namespace CheckFenix
 
 
 
-        public IEnumerable<Capitulo> CapitulosActuales => Capitulo.GetCapitulosActuales(URL);
+        public IEnumerable<Capitulo> CapitulosActuales => Capitulo.GetCapitulosActuales(HtmlAndLinksDic.URLANIMEFENIX);
         public IEnumerable<Serie> SeriesActuales
         {
             get
@@ -107,7 +106,7 @@ namespace CheckFenix
         {
             if (e.Key == Key.F5)
             {
-                HtmlDic.Clear();
+    
                 tbMain_SelectionChanged();
             }
             else if (tbMain.SelectedIndex == ALLSERIESPAGE)
@@ -138,7 +137,7 @@ namespace CheckFenix
             Title = "Guardando Cache!";
             Capitulo.SaveCache();
             Serie.SaveCache();
-            HtmlDic.SaveCache();
+            HtmlAndLinksDic.SaveCache();
            
         }
     }

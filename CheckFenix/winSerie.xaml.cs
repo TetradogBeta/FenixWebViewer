@@ -77,7 +77,7 @@ namespace CheckFenix
             if (lstCapitulos.SelectedIndex >= 0 && lstCapitulos.SelectedIndex < Serie.Total)
             {
                 lstLinks.Items.Clear();
-                lstLinks.Items.AddRange(Serie[lstCapitulos.SelectedIndex + 1].GetLinks().Where(l => l.StartsWith("http")).Select(l => new Url(l)));
+                lstLinks.Items.AddRange(Serie[lstCapitulos.SelectedIndex + 1].GetLinksFromHtml().Where(l => l.StartsWith("http")).Select(l => new Url(l)));
             }
         }
 

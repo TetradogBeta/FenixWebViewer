@@ -8,18 +8,19 @@ using System.Drawing;
 using Gabriel.Cat.S.Extension;
 using System.IO;
 using System.Net;
+using Gabriel.Cat.S.Utilitats;
 
 namespace CheckFenix.Core
 {
     public class Capitulo
     {
         public static string CacheFolder = "CacheCapitulos";
-        static SortedList<string, Bitmap> DicImagenes { get; set; }
+        static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; }
 
         Serie parent;
         static Capitulo()
         {
-            DicImagenes = new SortedList<string, Bitmap>();
+            DicImagenes = new LlistaOrdenada<string, Bitmap>();
             if (Directory.Exists(CacheFolder))
             { 
                 //cargo el cache!
@@ -43,7 +44,7 @@ namespace CheckFenix.Core
             {
                 string url = Path.GetFileName(Picture.AbsoluteUri);
                 if (!DicImagenes.ContainsKey(url))
-                    DicImagenes.Add(url, Picture.GetBitmap().Escala(0.25f));
+                    DicImagenes.Add(url, Picture.GetBitmap().Escala(0.35f));
                 return DicImagenes[url];
             }
         }
@@ -67,32 +68,32 @@ namespace CheckFenix.Core
         }
         public IEnumerable<Comentario> GetComentarios(IReadComentario reader)
         {
-
             return Comentario.GetComentarios(reader,Pagina);
         }
-        public IEnumerable<string> GetLinks()
+        public IEnumerable<string> GetLinksFromHtml()
         {
 
             string url;
-            string html = HtmlDic.GetStringCapitulo(Pagina);
+            string html = HtmlAndLinksDic.GetHtml(Pagina);
             Regex regex = new Regex(@"(?<=<iframe[^>]*?)(?:\s*width=[""'](?<width>[^""']+)[""']|\s*height=[""'](?<height>[^'""]+)[""']|\s*src=[""'](?<src>[^'""]+[""']))+[^>]*?>");
             Match match = regex.Match(html);
 
 
             while (match.Success)
             {
-                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value;
-                yield return url;
+                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value; 
                 match = match.NextMatch();
+
+                yield return url;
             }
 
         }
         public bool AbrirLink()
         {
-            string url = GetLinks().Where(l => l.Contains("mega.nz")).FirstOrDefault();
+            string url = HtmlAndLinksDic.GetLinks(this).Where(l => l.Contains("mega.nz")).FirstOrDefault();
             if (string.IsNullOrEmpty(url))
             {
-                url = GetLinks().FirstOrDefault();
+                url = HtmlAndLinksDic.GetLinks(this).FirstOrDefault();
             }
             if (!string.IsNullOrEmpty(url))
             {
@@ -113,22 +114,28 @@ namespace CheckFenix.Core
         public static Capitulo FromUrl(Uri urlVisionado)
         {
             Capitulo capitulo = new Capitulo() { Pagina = urlVisionado };
-            HtmlDocument docUrl = HtmlDic.GetHtmlCapitulo(urlVisionado);
+            HtmlDocument docUrl = HtmlAndLinksDic.GetHtmlCapitulo(urlVisionado);
             HtmlNode nodoName = docUrl.GetByTagName("h1").FirstOrDefault();
 
 
             capitulo.Name = nodoName.InnerText;
-            capitulo.Picture = capitulo.Parent.Picture;
+
+            if(Equals(capitulo.Parent.UltimoOrDefault,default(Capitulo)))
+                capitulo.Picture = capitulo.Parent.Picture;
+            else
+                 capitulo.Picture = capitulo.Parent.UltimoOrDefault.Picture;
 
             return capitulo;
         }
         public static void SaveCache()
         {
             string path;
+
             if (DicImagenes.Count > 0 && !Directory.Exists(CacheFolder))
                 Directory.CreateDirectory(CacheFolder);
             else if (DicImagenes.Count == 0 && Directory.Exists(CacheFolder))
                 Directory.Delete(CacheFolder);
+
             foreach (var item in DicImagenes)
             {
                 try

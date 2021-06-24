@@ -1,4 +1,5 @@
 ﻿using Gabriel.Cat.S.Extension;
+using Gabriel.Cat.S.Utilitats;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -15,14 +16,14 @@ namespace CheckFenix.Core
     {
         public static string CacheFolder = "CacheSeries";
         public static string FavoriteFile = "Favoritos.txt";
-        static SortedList<string, Bitmap> DicImagenes { get; set; } 
-        static SortedList<string,bool> DicFavoritos { get; set; }
+        static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; } 
+        static LlistaOrdenada<string,bool> DicFavoritos { get; set; }
         SortedList<int, Capitulo> capiulos;
-        Semaphore smDic;
+
         static Serie()
         {
-            DicImagenes = new SortedList<string, Bitmap>();
-            DicFavoritos = new SortedList<string, bool>();
+            DicImagenes = new LlistaOrdenada<string, Bitmap>();
+            DicFavoritos = new LlistaOrdenada<string, bool>();
             if (Directory.Exists(CacheFolder))
             {
                 //cargo el cache!
@@ -39,7 +40,6 @@ namespace CheckFenix.Core
         public Serie()
         {
             capiulos = new SortedList<int, Capitulo>();
-            smDic = new Semaphore(1, 1);
         }
         public Serie(HtmlNode nodoSerie) : this()
         {
@@ -59,11 +59,11 @@ namespace CheckFenix.Core
             {
                 Bitmap bmp;
                 string url = Path.GetFileName(Picture.AbsoluteUri);
-                smDic.WaitOne();
+         
                 if (!DicImagenes.ContainsKey(url))
                     DicImagenes.Add(url, Picture.GetBitmap().Escala(0.5f));
                 bmp= DicImagenes[url];
-                smDic.Release();
+      
                 return bmp;
             }
         }
@@ -100,18 +100,19 @@ namespace CheckFenix.Core
                 {
                     throw new CapituloNoEncontradoException(Finalizada);
                 }
-                smDic.WaitOne();
+              
                 if (!capiulos.ContainsKey(capitulo))
                 {
                     //lo cargo
-                    capiulos.Add(capitulo, Capitulo.FromUrl(new Uri($"{Pagina.AbsoluteUri.Replace(HtmlDic.URLANIMEFENIX, HtmlDic.URLANIMEFENIX + "ver/")}-{capitulo}")));
+                    capiulos.Add(capitulo, Capitulo.FromUrl(new Uri($"{Pagina.AbsoluteUri.Replace(HtmlAndLinksDic.URLANIMEFENIX, HtmlAndLinksDic.URLANIMEFENIX + "ver/")}-{capitulo}")));
                 }
-                smDic.Release();
+
                 return capiulos[capitulo];
             }
         }
         public DateTime? NextChapter => !Finalizada ? DateTime.Parse(NextCapterDate) : default(DateTime);
         public bool Finalizada => string.IsNullOrEmpty(NextCapterDate);
+        public Capitulo UltimoOrDefault =>Total>0? this[Total - 1]:default(Capitulo);
 
         public IEnumerable<Capitulo> GetCapitulos()
         {
@@ -137,7 +138,7 @@ namespace CheckFenix.Core
              <meta name="description" content='ME CAGO EN LA CONCHA PELUDA DE LA MADRE DEL JAPONÉS QUE SE LE OCURRIÓ EMITIR ESTA MADRE A LAS 4AM EN LATINO AMÉRICA DOS AÑOS SEGUIDOS. 
                 PD: Última temporada de NNT.' />
              */
-            HtmlDocument pagina =HtmlDic.GetHtmlSerie(Pagina);
+            HtmlDocument pagina =HtmlAndLinksDic.GetHtmlSerie(Pagina);
             HtmlNode nodoNombre = pagina.GetByTagName("meta").Where(m =>!Equals(m.Attributes["name"],default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
             HtmlNode nodoDesc= pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
             HtmlNode nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
@@ -149,7 +150,7 @@ namespace CheckFenix.Core
         public void Reload()
         {
             //actualiza el total,finalizada y el next
-            HtmlDocument pagina = HtmlDic.GetHtmlSerie(Pagina);
+            HtmlDocument pagina = HtmlAndLinksDic.GetHtmlSerie(Pagina);
             HtmlNode nodoFecha= pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Próximo")).FirstOrDefault();
             HtmlNode nodoTotal = pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Episodios:")).FirstOrDefault();
 
@@ -161,7 +162,17 @@ namespace CheckFenix.Core
 
             Total = int.Parse(nodoTotal.NextSibling.OuterHtml);
         }
-       
+
+        public bool UltimoEnParrilla()
+        {
+            Capitulo ultimo = UltimoOrDefault;
+            bool estaEnParrilla = !Equals(ultimo, default);
+            if (estaEnParrilla)
+            {
+               estaEnParrilla= HtmlAndLinksDic.GetHtml(ultimo.Pagina).Contains(ultimo.Pagina.AbsoluteUri);
+            }
+            return estaEnParrilla;
+        }
 
         int IComparable.CompareTo(object obj)
         {
@@ -198,14 +209,14 @@ namespace CheckFenix.Core
         {
             //
 
-            const string BASEURL = HtmlDic.URLANIMEFENIX + "animes?page=";
+            const string BASEURL = HtmlAndLinksDic.URLANIMEFENIX + "animes?page=";
             const string CLASE = "serie-card";
 
             HtmlNode[] nodosSeries;
             int paginaActual = 1;
             do
             {
-                nodosSeries = HtmlDic.GetHtmlSerie(new Uri(BASEURL + paginaActual)).GetByClass(CLASE).ToArray();
+                nodosSeries = HtmlAndLinksDic.GetHtmlSerie(new Uri(BASEURL + paginaActual)).GetByClass(CLASE).ToArray();
                 for (int i = 0; i < nodosSeries.Length; i++)
                 {
                     yield return new Serie(nodosSeries[i]);

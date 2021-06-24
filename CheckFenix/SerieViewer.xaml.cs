@@ -27,8 +27,8 @@ namespace CheckFenix
         {
             InitializeComponent();
             
-            btnFavorito.ImgOn = ImgOn.Clone();
-            btnFavorito.ImgOff = ImgOff.Clone();
+            btnFavorito.ImgOn = ImgOn;
+            btnFavorito.ImgOff = ImgOff;
         }
         public SerieViewer(Serie serie):this()
         {
