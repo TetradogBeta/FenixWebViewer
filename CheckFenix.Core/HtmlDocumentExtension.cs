@@ -3,33 +3,21 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using System.Linq;
-using System.Net;
 using HtmlAgilityPack;
 
 namespace CheckFenix.Core
 {
-    public static class UriExtension
-    {
-        public static string DownloadString(this Uri url)
-        {
-            return HtmlDocumentExtension.DownloadString(url.AbsoluteUri);
-        }
-    }
     public static class HtmlDocumentExtension
     {
-        public static string DownloadString(string url)
+        public static HtmlDocument LoadUrl(this HtmlDocument document, string url)
         {
-          
-            return new WebClient().DownloadString(url);
+            return document.LoadUrl(new Uri(url));
         }
         public static HtmlDocument LoadUrl(this HtmlDocument document, Uri url)
         {
-            return document.LoadUrl(url.AbsoluteUri);
+            return document.LoadString(url.DownloadString());
         }
-        public static HtmlDocument LoadUrl(this HtmlDocument document, string url)
-        {
-            return document.LoadString(DownloadString(url));
-        }
+    
         public static HtmlDocument LoadString(this HtmlDocument document, string htmlDoc)
         {
 

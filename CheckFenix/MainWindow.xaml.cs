@@ -32,6 +32,7 @@ namespace CheckFenix
         Task initSeries,initAllSeries;
         public MainWindow()
         {
+            var status = new Uri("https://www.yourupload.com/embed/KKQ337va7hjR").IsOk();
             InitializeComponent();
             Title = TITULO;
             initSeries = new Task(() => {  SeriesActuales.ToArray(); });
@@ -137,7 +138,7 @@ namespace CheckFenix
             Title = "Guardando Cache!";
             Capitulo.SaveCache();
             Serie.SaveCache();
-            HtmlAndLinksDic.SaveCache();
+
            
         }
     }

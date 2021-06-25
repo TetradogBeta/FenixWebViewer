@@ -21,6 +21,8 @@ namespace CheckFenix.Core
         static LlistaOrdenada<string, LlistaOrdenada<string>> DicCapitulos { get; set; }//los links pueden aparecer y desaparecer, tener opción de quitar para poder recargar
                                                                                         //si no va ninguno mirar de eliminarlos para poderlos recargar
         static LlistaOrdenada<string> DicCapitulosCaidos { get; set; }//ya sea informado o automatizado, se guardan mientras salgan en la web del capitulo, así no hay problemas
+       
+        static LlistaOrdenada<string,string> DicUrlsCargadas { get; set; }
         static HtmlAndLinksDic()
         {
             DicDiaEmision = new LlistaOrdenada<string, string>();
@@ -29,6 +31,7 @@ namespace CheckFenix.Core
             DicFinalizados = new LlistaOrdenada<string, string>();
             DicCapitulos = new LlistaOrdenada<string, LlistaOrdenada<string>>();
             DicCapitulosCaidos = new LlistaOrdenada<string>();
+            DicUrlsCargadas = new LlistaOrdenada<string, string>();
 
             foreach (DayOfWeek dayOfWeek in Enum.GetValues(typeof(DayOfWeek)))
                 DicDiaNoEmision.Add(dayOfWeek, new LlistaOrdenada<string, string>());
@@ -45,11 +48,91 @@ namespace CheckFenix.Core
         public static string GetHtml(Uri urlPagina)
         {
             //miro si existe y si no pues lo pongo donde toque
-            return urlPagina.DownloadString();
+            string html;
+            string url = urlPagina.AbsoluteUri;
+            bool exist = DicDiaEmision.ContainsKey(url);
+            if (!exist)
+            {
+
+                exist = DicPrimeraSemanaDeFinalizar.ContainsKey(url);
+                if (!exist)
+                {
+                    exist = DicFinalizados.ContainsKey(url);
+                    if (!exist)
+                    {
+                        if (!DicUrlsCargadas.ContainsKey(url))
+                        {
+                            html = urlPagina.DownloadString();
+                            DicUrlsCargadas.Add(url, html);
+                        }
+                        else
+                        {
+                            html = DicUrlsCargadas[url];
+                        }
+
+
+                    }
+                    else
+                    {
+                        html = DicFinalizados[url];
+                    }
+
+                }
+                else
+                {
+                    html = DicPrimeraSemanaDeFinalizar[url].Value;
+                }
+
+            }
+            else
+            {
+                html = DicDiaEmision[url];
+            }
+            return html;
+
         }
         public static string GetHtml(Serie serie)
         {//si no es necesario internet lo cojo del cache si esta
-            throw new NotImplementedException();
+            string html;
+            string url = serie.Pagina.AbsoluteUri;
+            bool exist = DicDiaEmision.ContainsKey(url);
+            if (!exist)
+            {
+                exist = DicDiaNoEmision[serie.NextChapter.Value.DayOfWeek].ContainsKey(url);
+                if (!exist)
+                {
+                    exist = DicPrimeraSemanaDeFinalizar.ContainsKey(url);
+                    if (!exist)
+                    {
+                        exist = DicFinalizados.ContainsKey(url);
+                        if (!exist)
+                        {
+                            html = GetHtmlServer(serie.Pagina);
+                            AddHtml(serie, html);
+
+                        }
+                        else
+                        {
+                            html = DicFinalizados[url];
+                        }
+
+                    }
+                    else
+                    {
+                        html = DicPrimeraSemanaDeFinalizar[url].Value;
+                    }
+                }
+                else
+                {
+                    html = DicDiaNoEmision[serie.NextChapter.Value.DayOfWeek][url];
+                }
+            }
+            else
+            {
+                html = DicDiaEmision[url];
+            }
+            return html;
+
         }
         public static void AddHtml(Serie serie, string html = default(string))
         {
@@ -59,7 +142,15 @@ namespace CheckFenix.Core
 
             if (Equals(html, default(string)))
             {
-                html = GetHtmlServer(serie.Pagina);
+                if (!DicUrlsCargadas.ContainsKey(serie.Pagina.AbsoluteUri))
+                {
+                    html = GetHtmlServer(serie.Pagina);
+                    DicUrlsCargadas.Add(serie.Pagina.AbsoluteUri, html);
+                }
+                else
+                {
+                    html = DicUrlsCargadas[serie.Pagina.AbsoluteUri];
+                }
             }
             if (serie.Finalizada)
             {
@@ -71,7 +162,8 @@ namespace CheckFenix.Core
                 }
                 else if (!DicPrimeraSemanaDeFinalizar.ContainsKey(serie.Pagina.AbsoluteUri) || DicPrimeraSemanaDeFinalizar[serie.Pagina.AbsoluteUri].Key < DateTime.Now)
                 {
-                    DicPrimeraSemanaDeFinalizar.Remove(serie.Pagina.AbsoluteUri);
+                    if (DicPrimeraSemanaDeFinalizar.ContainsKey(serie.Pagina.AbsoluteUri))
+                        DicPrimeraSemanaDeFinalizar.Remove(serie.Pagina.AbsoluteUri);
                     DicFinalizados.AddOrReplace(serie.Pagina.AbsoluteUri, html);
                 }
             }
@@ -89,7 +181,8 @@ namespace CheckFenix.Core
                         {
 
                             DicDiaEmision.AddOrReplace(serie.Pagina.AbsoluteUri, html);
-                            DicDiaNoEmision[dayOfWeek].Remove(serie.Pagina.AbsoluteUri);
+                            if (DicDiaNoEmision[dayOfWeek].ContainsKey(serie.Pagina.AbsoluteUri))
+                                DicDiaNoEmision[dayOfWeek].Remove(serie.Pagina.AbsoluteUri);
                         }
                     }
                 }
@@ -110,13 +203,28 @@ namespace CheckFenix.Core
 
             }
             links = capitulo.GetLinksFromHtml();
+            DicCapitulosCaidos.AddOrReplaceRange(links.Where(l =>
+            {
+                bool? isOk;
+                bool resp = !DicCapitulosCaidos.ContainsKey(l);
+                if (resp)
+                {
+                    isOk = new Uri(l).IsOk();
+                    resp = isOk.HasValue && !isOk.Value;//los que pueda añadir automaticamente lo hago aqui :)
+                }
+                return resp;
+            }).ToList());
             DicCapitulos[capitulo.Pagina.AbsoluteUri].AddOrReplaceRange(links.Where(l => !DicCapitulosCaidos.ContainsKey(l)).ToList());
 
             return DicCapitulos[capitulo.Pagina.AbsoluteUri].Values.Where(l => !DicCapitulosCaidos.ContainsKey(l));
         }
         public static void AddLinkCaido(string link)
         {
-            DicCapitulosCaidos.Add(link);
+            DicCapitulosCaidos.AddOrReplace(link, link);
+        }
+        public static void SaveCache()
+        {
+            throw new NotImplementedException();
         }
 
     }
