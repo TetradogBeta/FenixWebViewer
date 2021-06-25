@@ -138,6 +138,7 @@ namespace CheckFenix
             Title = "Guardando Cache!";
             Capitulo.SaveCache();
             Serie.SaveCache();
+            HtmlAndLinksDic.SaveCache();
 
            
         }

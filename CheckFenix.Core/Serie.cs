@@ -17,6 +17,7 @@ namespace CheckFenix.Core
         public static string CacheFolder = "CacheSeries";
         public static string FavoriteFile = "Favoritos.txt";
         static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; } 
+        static LlistaOrdenada<string,Serie> DicSeries { get; set; }
         static LlistaOrdenada<string,bool> DicFavoritos { get; set; }
         SortedList<int, Capitulo> capiulos;
 
@@ -24,6 +25,7 @@ namespace CheckFenix.Core
         {
             DicImagenes = new LlistaOrdenada<string, Bitmap>();
             DicFavoritos = new LlistaOrdenada<string, bool>();
+            DicSeries = new LlistaOrdenada<string, Serie>();
             if (Directory.Exists(CacheFolder))
             {
                 //cargo el cache!
@@ -199,11 +201,18 @@ namespace CheckFenix.Core
         }
         public static Serie FromUrl(Uri urlSerie)
         {
-            Serie serie = new Serie();
-            serie.Pagina = urlSerie;
-            serie.LoadNameAndDesc();
-            serie.Reload();
-            return serie;
+            Serie serie;
+            if (!DicSeries.ContainsKey(urlSerie.AbsoluteUri))
+            {
+                serie = new Serie();
+                serie.Pagina = urlSerie;
+                DicSeries.Add(urlSerie.AbsoluteUri, serie);
+               
+                serie.LoadNameAndDesc();
+                serie.Reload();
+                
+            }
+            return DicSeries[urlSerie.AbsoluteUri];
         }
         public static IEnumerable<Serie> GetAllSeries()
         {

@@ -5,12 +5,15 @@ using System.IO;
 using System.Threading;
 using Gabriel.Cat.S.Utilitats;
 using System.Linq;
+using System.Text;
 
 namespace CheckFenix.Core
 {
     public static class HtmlAndLinksDic
     {
         public const string URLANIMEFENIX = "https://www.animefenix.com/";
+
+        public static string CacheFolder = "HtmlAndLinksCache";
         static LlistaOrdenada<string, string> DicDiaEmision { get; set; }//solo se guarda si hay link a mega
                                                                          //este no cae ese dia
 
@@ -21,10 +24,13 @@ namespace CheckFenix.Core
         static LlistaOrdenada<string, LlistaOrdenada<string>> DicCapitulos { get; set; }//los links pueden aparecer y desaparecer, tener opción de quitar para poder recargar
                                                                                         //si no va ninguno mirar de eliminarlos para poderlos recargar
         static LlistaOrdenada<string> DicCapitulosCaidos { get; set; }//ya sea informado o automatizado, se guardan mientras salgan en la web del capitulo, así no hay problemas
-       
-        static LlistaOrdenada<string,string> DicUrlsCargadas { get; set; }
+
+        static LlistaOrdenada<string, string> DicUrlsCargadas { get; set; }
         static HtmlAndLinksDic()
         {
+            string path;
+            string[] partes;
+            TimeSpan unaSemana = TimeSpan.FromDays(7);
             DicDiaEmision = new LlistaOrdenada<string, string>();
             DicDiaNoEmision = new LlistaOrdenada<DayOfWeek, LlistaOrdenada<string, string>>();
             DicPrimeraSemanaDeFinalizar = new LlistaOrdenada<string, KeyValuePair<DateTime, string>>();
@@ -37,6 +43,96 @@ namespace CheckFenix.Core
                 DicDiaNoEmision.Add(dayOfWeek, new LlistaOrdenada<string, string>());
 
             //cargo lo guardado
+
+
+            path = Path.Combine(CacheFolder, nameof(DicDiaEmision));
+            if (Directory.Exists(path))
+            {
+                //nombre del anime.html
+                foreach(string file in Directory.GetFiles(path))
+                {
+                    if (File.GetLastWriteTime(file).Day == DateTime.Now.Day)
+                    {
+                        DicDiaEmision.Add(Path.Combine(URLANIMEFENIX, Path.GetFileNameWithoutExtension(file)), File.ReadAllText(file));
+                    }
+                    else
+                    {
+                        File.Delete(file);
+                    }
+                }
+            }
+
+
+
+            foreach (DayOfWeek dayOfWeek in Enum.GetValues(typeof(DayOfWeek)))
+            {
+                path = Path.Combine(CacheFolder, nameof(DicDiaNoEmision), dayOfWeek.ToString());
+                if (Directory.Exists(path))
+                {
+                    if (DateTime.Now.DayOfWeek == dayOfWeek)
+                    {
+                        Directory.Delete(path);//borro los de ese dia
+                    }
+                    else
+                    {
+                        //diaSemana/nombre.html
+                        foreach (string file in Directory.GetFiles(path))
+                        {
+                            if (File.GetLastWriteTime(file) - DateTime.Now < unaSemana)
+                                DicDiaNoEmision[dayOfWeek].Add(Path.GetFileNameWithoutExtension(file), File.ReadAllText(file));
+                            else File.Delete(file);//borro los caducados
+                        }
+                    }
+                }
+
+
+            }
+
+            path = Path.Combine(CacheFolder, nameof(DicPrimeraSemanaDeFinalizar));
+
+            if (Directory.Exists(path))
+            {
+
+                //ticksPara considerarlo finalizado->comprobar que tiene el mismo html o poner en finalizado el ultimo pero aparte para no molestar
+                //ticks nombre.html
+                foreach(string pathFile in Directory.GetFiles(path))
+                {
+                    partes =Path.GetFileNameWithoutExtension(pathFile).Split(" ");
+                    if (DateTime.Now.Ticks < long.Parse(partes[0]))
+                    {
+                        //aun no se ha validado al 100%;
+                        DicPrimeraSemanaDeFinalizar.Add(Path.Combine(URLANIMEFENIX, partes[1]), 
+                                                        new KeyValuePair<DateTime, string>
+                                                       (new DateTime(long.Parse(partes[0])), File.ReadAllText(pathFile)));
+                    }
+                    else
+                    {
+                        //poner en lista para comparar luego
+                        //de momento los pongo así
+                        DicFinalizados.Add(Path.Combine(URLANIMEFENIX, partes[1]), File.ReadAllText(pathFile));
+                    }
+                }
+
+            }
+
+            path = Path.Combine(CacheFolder, nameof(DicFinalizados));
+
+            if (Directory.Exists(path))
+            {
+                //nombre.html
+                foreach (string pathFile in Directory.GetFiles(path))
+                {
+                    DicFinalizados.Add(Path.Combine(URLANIMEFENIX, Path.GetFileNameWithoutExtension(pathFile)), File.ReadAllText(pathFile));
+                }
+            }
+
+            path = Path.Combine(CacheFolder, nameof(DicCapitulosCaidos), ".txt");
+
+            if (File.Exists(path))
+            {
+                DicCapitulosCaidos.AddOrReplaceRange(File.ReadAllLines(path));
+            }
+
 
         }
         public static string GetHtmlServer(Uri urlPagina)
@@ -209,8 +305,15 @@ namespace CheckFenix.Core
                 bool resp = !DicCapitulosCaidos.ContainsKey(l);
                 if (resp)
                 {
-                    isOk = new Uri(l).IsOk();
-                    resp = isOk.HasValue && !isOk.Value;//los que pueda añadir automaticamente lo hago aqui :)
+                    try
+                    {
+                        isOk = new Uri(l).IsOk();
+                        resp = isOk.HasValue && !isOk.Value;//los que pueda añadir automaticamente lo hago aqui :)
+                    }
+                    catch
+                    {
+                        resp = true;
+                    }
                 }
                 return resp;
             }).ToList());
@@ -224,7 +327,96 @@ namespace CheckFenix.Core
         }
         public static void SaveCache()
         {
-            throw new NotImplementedException();
+            KeyValuePair<string, string> pair;
+            KeyValuePair<string, KeyValuePair<DateTime, string>> pairPrimera;
+            string pathFinalizado;
+            string path = Path.Combine(CacheFolder, nameof(DicDiaEmision));
+
+            if (DicDiaEmision.Count > 0)
+            {
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+                for (int i = 0; i < DicDiaEmision.Count; i++)
+                {
+                    pair = DicDiaEmision[i];
+                    File.WriteAllText(Path.Combine(path, $"{pair.Key.Remove(pair.Key.LastIndexOf('/'))}.html"), pair.Value);
+                }
+            }
+            else
+            {
+                if (Directory.Exists(path))
+                    Directory.Delete(path);
+            }
+
+            if (DicDiaNoEmision.Count > 0)
+            {
+                foreach (DayOfWeek dayOfWeek in Enum.GetValues(typeof(DayOfWeek)))
+                {
+                    path = Path.Combine(CacheFolder, nameof(DicDiaNoEmision), dayOfWeek.ToString());
+                    if (!Directory.Exists(path) && DicDiaNoEmision[dayOfWeek].Count > 0)
+                        Directory.CreateDirectory(path);
+                    for (int i = 0; i < DicDiaNoEmision[dayOfWeek].Count; i++)
+                    {
+                        pair = DicDiaNoEmision[dayOfWeek][i];
+                        File.WriteAllText(Path.Combine(path, $"{pair.Key.Remove(pair.Key.LastIndexOf('/'))}.html"), pair.Value);
+                    }
+                }
+            }
+            else
+            {
+                path = Path.Combine(CacheFolder, nameof(DicDiaNoEmision));
+                if (Directory.Exists(path))
+                    Directory.Delete(path);
+            }
+            path = Path.Combine(CacheFolder, nameof(DicPrimeraSemanaDeFinalizar));
+
+            if (DicPrimeraSemanaDeFinalizar.Count > 0)
+            {
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+
+                for (int i = 0; i < DicPrimeraSemanaDeFinalizar.Count; i++)
+                {
+                    pairPrimera = DicPrimeraSemanaDeFinalizar[i];
+                    File.WriteAllText(Path.Combine(path, $"{pairPrimera.Value.Key.Ticks} {pairPrimera.Key.Remove(pairPrimera.Key.LastIndexOf('/'))}.html"), pairPrimera.Value.Value);
+                }
+            }
+            else
+            {
+                if (Directory.Exists(path))
+                    Directory.Delete(path);
+            }
+            path = Path.Combine(CacheFolder, nameof(DicFinalizados));
+
+            if (DicFinalizados.Count > 0)
+            {
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+
+                for (int i = 0; i < DicFinalizados.Count; i++)
+                {
+                    pair = DicFinalizados[i];
+                    pathFinalizado = Path.Combine(path, $"{pair.Key.Substring(pair.Key.LastIndexOf('/') + 1)}.html");
+                    if(!File.Exists(pathFinalizado))
+                      File.WriteAllText(pathFinalizado, pair.Value);
+                }
+            }
+            else
+            {
+                if (Directory.Exists(path))
+                    Directory.Delete(path);
+            }
+            path = Path.Combine(CacheFolder, nameof(DicCapitulosCaidos), ".txt");
+
+            if (DicCapitulosCaidos.Count > 0)
+            {
+                File.WriteAllLines(path, DicCapitulosCaidos.Values);
+            }
+            else
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
         }
 
     }

@@ -16,11 +16,13 @@ namespace CheckFenix.Core
     {
         public static string CacheFolder = "CacheCapitulos";
         static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; }
-
+        static LlistaOrdenada<string,Capitulo> DicCapitulos { get; set; }
         Serie parent;
         static Capitulo()
         {
             DicImagenes = new LlistaOrdenada<string, Bitmap>();
+            DicCapitulos = new LlistaOrdenada<string, Capitulo>();
+
             if (Directory.Exists(CacheFolder))
             {
                 //cargo el cache!
@@ -35,6 +37,8 @@ namespace CheckFenix.Core
             Pagina = new Uri(nodeLink.Attributes["href"].Value);
             Name = nodeLink.Attributes["title"].Value;
             Picture = new Uri(nodeLink.ChildNodes[1].Attributes["src"].Value);
+            
+
         }
         public string Name { get; set; }
         public Uri Picture { get; set; }
@@ -113,19 +117,27 @@ namespace CheckFenix.Core
         }
         public static Capitulo FromUrl(Uri urlVisionado)
         {
-            Capitulo capitulo = new Capitulo() { Pagina = urlVisionado };
-            HtmlDocument docUrl = new HtmlDocument().LoadString(HtmlAndLinksDic.GetHtml(urlVisionado));
-            HtmlNode nodoName = docUrl.GetByTagName("h1").FirstOrDefault();
+            Capitulo capitulo;
+            HtmlDocument docUrl;
+            HtmlNode nodoName;
+            if (!DicCapitulos.ContainsKey(urlVisionado.AbsoluteUri))
+            {
+                capitulo = new Capitulo() { Pagina = urlVisionado };
+                DicCapitulos.Add(urlVisionado.AbsoluteUri, capitulo);
 
-            if (!Equals(nodoName, default(HtmlNode)))
-                capitulo.Name = nodoName.InnerText;
+                docUrl = new HtmlDocument().LoadString(HtmlAndLinksDic.GetHtml(urlVisionado));
+                nodoName = docUrl.GetByTagName("h1").FirstOrDefault();
 
-            if (Equals(capitulo.Parent.UltimoOrDefault, default(Capitulo)))
-                capitulo.Picture = capitulo.Parent.Picture;
-            else
-                capitulo.Picture = capitulo.Parent.UltimoOrDefault.Picture;
+                if (!Equals(nodoName, default(HtmlNode)))
+                    capitulo.Name = nodoName.InnerText;
 
-            return capitulo;
+                if (Equals(capitulo.Parent.UltimoOrDefault, default(Capitulo)))
+                    capitulo.Picture = capitulo.Parent.Picture;
+                else
+                    capitulo.Picture = capitulo.Parent.UltimoOrDefault.Picture;
+              
+            }
+            return DicCapitulos[urlVisionado.AbsoluteUri];
         }
         public static void SaveCache()
         {
