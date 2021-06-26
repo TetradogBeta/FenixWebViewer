@@ -27,17 +27,16 @@ namespace CheckFenix
         const int SERIESACTUALESPAGE = 1;
         const int ALLSERIESPAGE = 2;
         const string CARGANDO = "Cargando";
-        const string TITULO = "AnimeFenix Desktop 1.3";
+        const string TITULO = "AnimeFenix Desktop 1.4beta";
 
         Task initSeries,initAllSeries;
         public MainWindow()
         {
-            var status = new Uri("https://www.yourupload.com/embed/KKQ337va7hjR").IsOk();
             InitializeComponent();
             Title = TITULO;
-            initSeries = new Task(() => {  SeriesActuales.ToArray(); });
+            initSeries = new Task(() => { SeriesActuales.ToArray(); });
             initSeries.Start();
-            initAllSeries = new Task(() => { AllSeries.Take(visorTodasLasSeries.TotalPage*3).ToArray();  });
+            initAllSeries = new Task(() => { AllSeries.Take(visorTodasLasSeries.TotalPage * 3).ToArray(); });
             initAllSeries.Start();
         }
 

@@ -23,12 +23,14 @@ namespace CheckFenix.Core
         static LlistaOrdenada<string, string> DicFinalizados { get; set; }//se guardan porque son inmutables
         static LlistaOrdenada<string, LlistaOrdenada<string>> DicCapitulos { get; set; }//los links pueden aparecer y desaparecer, tener opción de quitar para poder recargar
                                                                                         //si no va ninguno mirar de eliminarlos para poderlos recargar
-        static LlistaOrdenada<string> DicCapitulosCaidos { get; set; }//ya sea informado o automatizado, se guardan mientras salgan en la web del capitulo, así no hay problemas
+        static LlistaOrdenada<string> DicCapitulosCaidosONoValidos { get; set; }//ya sea informado o automatizado, se guardan mientras salgan en la web del capitulo, así no hay problemas
 
         static LlistaOrdenada<string, string> DicUrlsCargadas { get; set; }
         static HtmlAndLinksDic()
         {
             string path;
+            string html;
+            string uri;
             string[] partes;
             TimeSpan unaSemana = TimeSpan.FromDays(7);
             DicDiaEmision = new LlistaOrdenada<string, string>();
@@ -36,7 +38,7 @@ namespace CheckFenix.Core
             DicPrimeraSemanaDeFinalizar = new LlistaOrdenada<string, KeyValuePair<DateTime, string>>();
             DicFinalizados = new LlistaOrdenada<string, string>();
             DicCapitulos = new LlistaOrdenada<string, LlistaOrdenada<string>>();
-            DicCapitulosCaidos = new LlistaOrdenada<string>();
+            DicCapitulosCaidosONoValidos = new LlistaOrdenada<string>();
             DicUrlsCargadas = new LlistaOrdenada<string, string>();
 
             foreach (DayOfWeek dayOfWeek in Enum.GetValues(typeof(DayOfWeek)))
@@ -53,7 +55,10 @@ namespace CheckFenix.Core
                 {
                     if (File.GetLastWriteTime(file).Day == DateTime.Now.Day)
                     {
-                        DicDiaEmision.Add(Path.Combine(URLANIMEFENIX, Path.GetFileNameWithoutExtension(file)), File.ReadAllText(file));
+                        uri = Path.Combine(URLANIMEFENIX, Path.GetFileNameWithoutExtension(file));
+                        html = File.ReadAllText(file);
+                        DicDiaEmision.Add(uri,html);
+                        DicUrlsCargadas.Add(uri, html);
                     }
                     else
                     {
@@ -69,17 +74,22 @@ namespace CheckFenix.Core
                 path = Path.Combine(CacheFolder, nameof(DicDiaNoEmision), dayOfWeek.ToString());
                 if (Directory.Exists(path))
                 {
-                    if (DateTime.Now.DayOfWeek == dayOfWeek)
+                    if (DateTime.UtcNow.DayOfWeek == dayOfWeek)
                     {
-                        Directory.Delete(path);//borro los de ese dia
+                        Directory.Delete(path,true);//borro los de ese dia
                     }
                     else
                     {
                         //diaSemana/nombre.html
                         foreach (string file in Directory.GetFiles(path))
                         {
-                            if (File.GetLastWriteTime(file) - DateTime.Now < unaSemana)
-                                DicDiaNoEmision[dayOfWeek].Add(Path.GetFileNameWithoutExtension(file), File.ReadAllText(file));
+                            if (File.GetLastWriteTimeUtc(file) - DateTime.UtcNow < unaSemana)
+                            {
+                                uri = Path.Combine(URLANIMEFENIX, Path.GetFileNameWithoutExtension(file));
+                                html = File.ReadAllText(file);
+                                DicDiaNoEmision[dayOfWeek].Add(uri, html);
+                                DicUrlsCargadas.AddOrReplace(uri, html);
+                            }
                             else File.Delete(file);//borro los caducados
                         }
                     }
@@ -97,20 +107,28 @@ namespace CheckFenix.Core
                 //ticks nombre.html
                 foreach(string pathFile in Directory.GetFiles(path))
                 {
-                    partes =Path.GetFileNameWithoutExtension(pathFile).Split(" ");
-                    if (DateTime.Now.Ticks < long.Parse(partes[0]))
+                    try
                     {
-                        //aun no se ha validado al 100%;
-                        DicPrimeraSemanaDeFinalizar.Add(Path.Combine(URLANIMEFENIX, partes[1]), 
-                                                        new KeyValuePair<DateTime, string>
-                                                       (new DateTime(long.Parse(partes[0])), File.ReadAllText(pathFile)));
+                        partes = Path.GetFileNameWithoutExtension(pathFile).Split(" ");
+                        uri = Path.Combine(URLANIMEFENIX, partes[1]);
+                        html = File.ReadAllText(pathFile);
+                        if (DateTime.Now.Ticks < long.Parse(partes[0]))
+                        {
+                            //aun no se ha validado al 100%;
+                     
+                            DicPrimeraSemanaDeFinalizar.Add(uri,
+                                                            new KeyValuePair<DateTime, string>
+                                                           (new DateTime(long.Parse(partes[0])), html));
+                        }
+                        else
+                        {
+                            //poner en lista para comparar luego
+                            //de momento los pongo así
+                            DicFinalizados.Add(uri, html);
+                        }
+                        DicUrlsCargadas.AddOrReplace(uri, html);
                     }
-                    else
-                    {
-                        //poner en lista para comparar luego
-                        //de momento los pongo así
-                        DicFinalizados.Add(Path.Combine(URLANIMEFENIX, partes[1]), File.ReadAllText(pathFile));
-                    }
+                    catch { File.Delete(pathFile); }
                 }
 
             }
@@ -122,19 +140,23 @@ namespace CheckFenix.Core
                 //nombre.html
                 foreach (string pathFile in Directory.GetFiles(path))
                 {
-                    DicFinalizados.Add(Path.Combine(URLANIMEFENIX, Path.GetFileNameWithoutExtension(pathFile)), File.ReadAllText(pathFile));
+                    uri = Path.Combine(URLANIMEFENIX, Path.GetFileNameWithoutExtension(pathFile));
+                    html = File.ReadAllText(pathFile);
+                    DicFinalizados.Add(uri, html);
+                    DicUrlsCargadas.AddOrReplace(uri, html);
                 }
             }
 
-            path = Path.Combine(CacheFolder, nameof(DicCapitulosCaidos), ".txt");
+            path = Path.Combine(CacheFolder, $"{nameof(DicCapitulosCaidosONoValidos)}.txt");
 
             if (File.Exists(path))
             {
-                DicCapitulosCaidos.AddOrReplaceRange(File.ReadAllLines(path));
+                DicCapitulosCaidosONoValidos.AddOrReplaceRange(File.ReadAllLines(path));
             }
 
 
         }
+
         public static string GetHtmlServer(Uri urlPagina)
         {
             //html directo del servidor
@@ -143,6 +165,7 @@ namespace CheckFenix.Core
 
         public static string GetHtml(Uri urlPagina)
         {
+
             //miro si existe y si no pues lo pongo donde toque
             string html;
             string url = urlPagina.AbsoluteUri;
@@ -187,8 +210,10 @@ namespace CheckFenix.Core
             return html;
 
         }
+
         public static string GetHtml(Serie serie)
         {//si no es necesario internet lo cojo del cache si esta
+
             string html;
             string url = serie.Pagina.AbsoluteUri;
             bool exist = DicDiaEmision.ContainsKey(url);
@@ -203,8 +228,12 @@ namespace CheckFenix.Core
                         exist = DicFinalizados.ContainsKey(url);
                         if (!exist)
                         {
-                            html = GetHtmlServer(serie.Pagina);
-                            AddHtml(serie, html);
+                            if(!DicUrlsCargadas.ContainsKey(serie.Pagina.AbsoluteUri))
+                            {
+                                DicUrlsCargadas.AddOrReplace(serie.Pagina.AbsoluteUri, GetHtmlServer(serie.Pagina));
+                            }
+                            html = DicUrlsCargadas[serie.Pagina.AbsoluteUri];
+                          
 
                         }
                         else
@@ -254,9 +283,9 @@ namespace CheckFenix.Core
                 if (serie.UltimoEnParrilla())
                 {
                     if (!DicPrimeraSemanaDeFinalizar.ContainsKey(serie.Pagina.AbsoluteUri))
-                        DicPrimeraSemanaDeFinalizar.Add(serie.Pagina.AbsoluteUri, new KeyValuePair<DateTime, string>(DateTime.Now + TimeSpan.FromDays(TOTALDIASPARAFINALIZAR), html));
+                        DicPrimeraSemanaDeFinalizar.Add(serie.Pagina.AbsoluteUri, new KeyValuePair<DateTime, string>(DateTime.UtcNow + TimeSpan.FromDays(TOTALDIASPARAFINALIZAR), html));
                 }
-                else if (!DicPrimeraSemanaDeFinalizar.ContainsKey(serie.Pagina.AbsoluteUri) || DicPrimeraSemanaDeFinalizar[serie.Pagina.AbsoluteUri].Key < DateTime.Now)
+                else if (!DicPrimeraSemanaDeFinalizar.ContainsKey(serie.Pagina.AbsoluteUri) || DicPrimeraSemanaDeFinalizar[serie.Pagina.AbsoluteUri].Key < DateTime.UtcNow)
                 {
                     if (DicPrimeraSemanaDeFinalizar.ContainsKey(serie.Pagina.AbsoluteUri))
                         DicPrimeraSemanaDeFinalizar.Remove(serie.Pagina.AbsoluteUri);
@@ -265,7 +294,7 @@ namespace CheckFenix.Core
             }
             else
             {
-                dayOfWeek = serie.NextChapter.Value.ToUniversalTime().DayOfWeek;
+                dayOfWeek = serie.NextChapter.Value.DayOfWeek;
 
                 if (DateTime.UtcNow.DayOfWeek == dayOfWeek)
                 {
@@ -299,31 +328,29 @@ namespace CheckFenix.Core
 
             }
             links = capitulo.GetLinksFromHtml();
-            DicCapitulosCaidos.AddOrReplaceRange(links.Where(l =>
+            DicCapitulosCaidosONoValidos.AddOrReplaceRange(links.Where(l =>
             {
                 bool? isOk;
-                bool resp = !DicCapitulosCaidos.ContainsKey(l);
+                bool resp = !DicCapitulosCaidosONoValidos.ContainsKey(l);
                 if (resp)
                 {
-                    try
+                    if (l.StartsWith("http"))
                     {
                         isOk = new Uri(l).IsOk();
                         resp = isOk.HasValue && !isOk.Value;//los que pueda añadir automaticamente lo hago aqui :)
                     }
-                    catch
-                    {
-                        resp = true;
-                    }
+                    else resp = true;
+                   
                 }
                 return resp;
             }).ToList());
-            DicCapitulos[capitulo.Pagina.AbsoluteUri].AddOrReplaceRange(links.Where(l => !DicCapitulosCaidos.ContainsKey(l)).ToList());
+            DicCapitulos[capitulo.Pagina.AbsoluteUri].AddOrReplaceRange(links.Where(l => !DicCapitulosCaidosONoValidos.ContainsKey(l)).ToList());
 
-            return DicCapitulos[capitulo.Pagina.AbsoluteUri].Values.Where(l => !DicCapitulosCaidos.ContainsKey(l));
+            return DicCapitulos[capitulo.Pagina.AbsoluteUri].Values.Where(l => !DicCapitulosCaidosONoValidos.ContainsKey(l));
         }
         public static void AddLinkCaido(string link)
         {
-            DicCapitulosCaidos.AddOrReplace(link, link);
+            DicCapitulosCaidosONoValidos.AddOrReplace(link, link);
         }
         public static void SaveCache()
         {
@@ -339,7 +366,7 @@ namespace CheckFenix.Core
                 for (int i = 0; i < DicDiaEmision.Count; i++)
                 {
                     pair = DicDiaEmision[i];
-                    File.WriteAllText(Path.Combine(path, $"{pair.Key.Remove(pair.Key.LastIndexOf('/'))}.html"), pair.Value);
+                    File.WriteAllText(Path.Combine(path, $"{pair.Key.Substring(pair.Key.LastIndexOf('/')+1)}.html"), pair.Value);
                 }
             }
             else
@@ -358,7 +385,7 @@ namespace CheckFenix.Core
                     for (int i = 0; i < DicDiaNoEmision[dayOfWeek].Count; i++)
                     {
                         pair = DicDiaNoEmision[dayOfWeek][i];
-                        File.WriteAllText(Path.Combine(path, $"{pair.Key.Remove(pair.Key.LastIndexOf('/'))}.html"), pair.Value);
+                        File.WriteAllText(Path.Combine(path, $"{pair.Key.Substring(pair.Key.LastIndexOf('/')+1)}.html"), pair.Value);
                     }
                 }
             }
@@ -378,7 +405,7 @@ namespace CheckFenix.Core
                 for (int i = 0; i < DicPrimeraSemanaDeFinalizar.Count; i++)
                 {
                     pairPrimera = DicPrimeraSemanaDeFinalizar[i];
-                    File.WriteAllText(Path.Combine(path, $"{pairPrimera.Value.Key.Ticks} {pairPrimera.Key.Remove(pairPrimera.Key.LastIndexOf('/'))}.html"), pairPrimera.Value.Value);
+                    File.WriteAllText(Path.Combine(path, $"{pairPrimera.Value.Key.ToUniversalTime().Ticks} {pairPrimera.Key.Substring(pairPrimera.Key.LastIndexOf('/')+1)}.html"), pairPrimera.Value.Value);
                 }
             }
             else
@@ -406,11 +433,11 @@ namespace CheckFenix.Core
                 if (Directory.Exists(path))
                     Directory.Delete(path);
             }
-            path = Path.Combine(CacheFolder, nameof(DicCapitulosCaidos), ".txt");
+            path = Path.Combine(CacheFolder, $"{nameof(DicCapitulosCaidosONoValidos)}.txt");
 
-            if (DicCapitulosCaidos.Count > 0)
+            if (DicCapitulosCaidosONoValidos.Count > 0)
             {
-                File.WriteAllLines(path, DicCapitulosCaidos.Values);
+                File.WriteAllLines(path, DicCapitulosCaidosONoValidos.Values);
             }
             else
             {

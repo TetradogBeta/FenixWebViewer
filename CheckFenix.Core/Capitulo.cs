@@ -16,7 +16,7 @@ namespace CheckFenix.Core
     {
         public static string CacheFolder = "CacheCapitulos";
         static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; }
-        static LlistaOrdenada<string,Capitulo> DicCapitulos { get; set; }
+        static LlistaOrdenada<string, Capitulo> DicCapitulos { get; set; }
         Serie parent;
         static Capitulo()
         {
@@ -37,7 +37,7 @@ namespace CheckFenix.Core
             Pagina = new Uri(nodeLink.Attributes["href"].Value);
             Name = nodeLink.Attributes["title"].Value;
             Picture = new Uri(nodeLink.ChildNodes[1].Attributes["src"].Value);
-            
+
 
         }
         public string Name { get; set; }
@@ -78,9 +78,19 @@ namespace CheckFenix.Core
         {
 
             string url;
-            string html = HtmlAndLinksDic.GetHtmlServer(Pagina);
-            Regex regex = new Regex(@"(?<=<iframe[^>]*?)(?:\s*width=[""'](?<width>[^""']+)[""']|\s*height=[""'](?<height>[^'""]+)[""']|\s*src=[""'](?<src>[^'""]+[""']))+[^>]*?>");
-            Match match = regex.Match(html);
+            string html;
+            Regex regex;
+            Match match;
+            try
+            {
+                html = HtmlAndLinksDic.GetHtmlServer(Pagina);
+            }
+            catch
+            {
+                html = string.Empty;
+            }
+            regex = new Regex(@"(?<=<iframe[^>]*?)(?:\s*width=[""'](?<width>[^""']+)[""']|\s*height=[""'](?<height>[^'""]+)[""']|\s*src=[""'](?<src>[^'""]+[""']))+[^>]*?>");
+            match = regex.Match(html);
 
 
             while (match.Success)
@@ -90,6 +100,7 @@ namespace CheckFenix.Core
 
                 yield return url;
             }
+
 
         }
         public bool AbrirLink(string serverPreference = "mega.nz")
@@ -105,7 +116,10 @@ namespace CheckFenix.Core
             }
             return !string.IsNullOrEmpty(url);
         }
-
+        public override string ToString()
+        {
+            return Name;
+        }
         public static IEnumerable<Capitulo> GetCapitulosActuales(string urlFenix)
         {
             return GetCapitulos(new HtmlDocument().LoadUrl(urlFenix).DocumentNode);
@@ -131,11 +145,11 @@ namespace CheckFenix.Core
                 if (!Equals(nodoName, default(HtmlNode)))
                     capitulo.Name = nodoName.InnerText;
 
-                if (Equals(capitulo.Parent.UltimoOrDefault, default(Capitulo)))
+                if (Equals(capitulo.Parent.Total, int.Parse(urlVisionado.AbsoluteUri.Substring(urlVisionado.AbsoluteUri.LastIndexOf("-")+1))))
                     capitulo.Picture = capitulo.Parent.Picture;
                 else
                     capitulo.Picture = capitulo.Parent.UltimoOrDefault.Picture;
-              
+
             }
             return DicCapitulos[urlVisionado.AbsoluteUri];
         }
