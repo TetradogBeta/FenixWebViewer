@@ -14,12 +14,21 @@
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition Height="50"/>
+                <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
             <Image x:Name="imgSerie"/>
             <Grid x:Name="gFechaOFinalizado" Grid.Row="1">
                 <Viewbox >
                     <TextBlock x:Name="tbFechaNextOFinalizado" Foreground = "White"/>
                 </Viewbox>
+            </Grid>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button x:Name="btnPrecuela" Content="Precuela" Click="btnPrecuela_Click" />
+                <Button x:Name="btnSecuela" Content="Secuela" Grid.Column="1" Click="btnSecuela_Click"/>
             </Grid>
         </Grid>
         <Grid Grid.Column="1">

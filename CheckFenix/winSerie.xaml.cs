@@ -55,6 +55,9 @@ namespace CheckFenix
             imgSerie.Source =bmp;
 
             Title = Serie.Name;
+            btnPrecuela.IsEnabled = Serie.HasPrecuela;
+            btnSecuela.IsEnabled = Serie.HasSecuela;
+
             tbDesc.Text = Serie.Description;
             if (Serie.Finalizada)
             {
@@ -85,6 +88,16 @@ namespace CheckFenix
         {
             if (!Equals(lstLinks.SelectedItem, default(Url)))
                 (lstLinks.SelectedItem as Url).Uri.Abrir();
+        }
+
+        private void btnPrecuela_Click(object sender, RoutedEventArgs e)
+        {
+            new winSerie(Serie.Precuela).Show();
+        }
+
+        private void btnSecuela_Click(object sender, RoutedEventArgs e)
+        {
+            new winSerie(Serie.Secuela).Show();
         }
     }
     public class Url

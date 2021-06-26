@@ -86,6 +86,10 @@ namespace CheckFenix.Core
                 }
             }
         }
+        public Serie Precuela { get; set; }
+        public Serie Secuela { get; set; }
+        public bool HasPrecuela => !Equals(Precuela, default(Serie));
+        public bool HasSecuela=> !Equals(Secuela, default(Serie));
         public string Name { get; set; }
         public string Description { get; set; }
         public string NextCapterDate { get; set; }
@@ -159,9 +163,22 @@ namespace CheckFenix.Core
             HtmlNode nodoNombre = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
             HtmlNode nodoDesc = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
             HtmlNode nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
+            HtmlNode nodoPrecuela = pagina.GetByTagName("li").Where(l => l.ChildNodes.Any(c => c.Name == "span" && c.InnerText.Contains("Precuela:"))).FirstOrDefault();
+            HtmlNode nodoSecuela = pagina.GetByTagName("li").Where(l => l.ChildNodes.Any(c => c.Name == "span" && c.InnerText.Contains("Secuela:"))).FirstOrDefault();
+
             Name = nodoNombre.Attributes["content"].Value;
             Description = nodoDesc.Attributes["content"].Value.Replace("&quot;", "");
             Picture = new Uri(nodoPicture.ChildNodes[1].Attributes["src"].Value);
+            //Precuela:
+            if (!Equals(nodoPrecuela, default(HtmlNode)))
+            {
+                Precuela = FromUrl(new Uri(nodoPrecuela.GetByTagName("a").First().Attributes["href"].Value));
+            }
+            //Secuela:
+            if (!Equals(nodoSecuela, default(HtmlNode)))
+            {
+                Secuela = FromUrl(new Uri(nodoSecuela.GetByTagName("a").First().Attributes["href"].Value));
+            }
 
         }
         public void Reload()
@@ -213,7 +230,7 @@ namespace CheckFenix.Core
         }
         public bool Equals([AllowNull] Serie x, [AllowNull] Serie y)
         {
-            return x.Equals(y);
+            return ReferenceEquals(x,y)?true: ReferenceEquals(x,default)?false: ReferenceEquals(y,default)?false:x.Equals(y);
         }
 
         public int GetHashCode([DisallowNull] Serie obj)
@@ -264,6 +281,7 @@ namespace CheckFenix.Core
             } while (nodosSeries.Length > 0);
 
         }
+        public static IEnumerable<Serie> GetFavoritos() => DicFavoritos.Keys.Select(s => FromUrl(new Uri(s)));
         public static void SaveFavoritos()
         {
             string pathBack = FavoriteFile + ".bak";

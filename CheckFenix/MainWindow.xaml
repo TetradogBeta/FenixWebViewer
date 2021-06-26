@@ -20,5 +20,8 @@
         <TabItem Header="Todas las Series">
             <local:VisorSeries x:Name="visorTodasLasSeries"  KeyDown="Window_KeyDown" />
         </TabItem>
+        <TabItem Header="Favoritos">
+            <local:VisorSeries x:Name="visorSeriesFavoritas"  KeyDown="Window_KeyDown" />
+        </TabItem>
     </TabControl>
 </Window>

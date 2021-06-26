@@ -26,6 +26,7 @@ namespace CheckFenix
         const int CAPITULOSACTUALESPAGE = 0;
         const int SERIESACTUALESPAGE = 1;
         const int ALLSERIESPAGE = 2;
+        const int FAVORITOSPAGE = 3;
         const string CARGANDO = "Cargando";
         const string TITULO = "AnimeFenix Desktop 1.4beta";
 
@@ -59,7 +60,7 @@ namespace CheckFenix
         }
         public IEnumerable<Serie> AllSeries => Serie.GetAllSeries();
 
-
+        public IEnumerable<Serie> Favorites => Serie.GetFavoritos();
 
         private void tbMain_SelectionChanged(object sender = null, SelectionChangedEventArgs e = null)
         {
@@ -87,6 +88,12 @@ namespace CheckFenix
                     initAllSeries.Wait();
                     visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
                     break;
+                case FAVORITOSPAGE:
+
+                    visorSeriesFavoritas.Series = Favorites;
+                    Title = CARGANDO;
+                    visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar());
+                    break;
             }
 
         }
@@ -104,6 +111,7 @@ namespace CheckFenix
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+          
             if (e.Key == Key.F5)
             {
     
@@ -126,6 +134,25 @@ namespace CheckFenix
                     visorTodasLasSeries.Page++;
                     Title = CARGANDO;
                     visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
+                }
+            }
+            else if (tbMain.SelectedIndex == FAVORITOSPAGE)
+            {
+                if (e.Key.Equals(Key.Up))
+                {
+                    if (visorSeriesFavoritas.Page > 0)
+                    {
+                        visorSeriesFavoritas.Page--;
+                        Title = CARGANDO;
+                        visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar());
+
+                    }
+                }
+                else if (e.Key.Equals(Key.Down))
+                {
+                    visorSeriesFavoritas.Page++;
+                    Title = CARGANDO;
+                    visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar());
                 }
             }
         }
