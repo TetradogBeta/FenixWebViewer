@@ -6,5 +6,5 @@
              xmlns:local="clr-namespace:CheckFenix"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <UniformGrid x:Name="ugSeries" Columns="6"/>
+    <UniformGrid x:Name="ugSeries" Columns="6" />
 </UserControl>

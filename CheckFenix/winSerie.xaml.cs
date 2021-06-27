@@ -40,21 +40,31 @@ namespace CheckFenix
             Refresh();
         }
         public Serie Serie { get; set; }
+
         public async Task Refresh()
         {
-            BitmapImage bmp = new BitmapImage();
 
             lstCapitulos.Items.Clear();
             for (int i = 1; i <= Serie.Total; i++)
                 lstCapitulos.Items.Add($"Capitulo {i}");
 
-            bmp.BeginInit();
-            bmp.UriSource = Serie.Picture;
-            bmp.EndInit();
 
-            imgSerie.Source =bmp;
+            imgSerie.Serie=Serie;
+            imgSerie.Refresh();
 
-            Title = Serie.Name;
+            if (Serie.Total == 0)
+            {
+                gCapitulos.Visibility =  Visibility.Hidden;
+                rdCapitulos.Height = new GridLength(0);
+                Title = $"Próximamente {Serie.Name}";
+            }
+            else
+            {
+                gCapitulos.Visibility = Visibility.Visible;
+                Title =Serie.Name;
+            }
+      
+           
             btnPrecuela.IsEnabled = Serie.HasPrecuela;
             btnSecuela.IsEnabled = Serie.HasSecuela;
 
@@ -75,19 +85,30 @@ namespace CheckFenix
 
 
 
-        private void lstCapitulos_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void lstCapitulos_SelectionChanged(object sender=default, SelectionChangedEventArgs e=default)
         {
             if (lstCapitulos.SelectedIndex >= 0 && lstCapitulos.SelectedIndex < Serie.Total)
             {
                 lstLinks.Items.Clear();
-                lstLinks.Items.AddRange(Serie[lstCapitulos.SelectedIndex + 1].GetLinksFromHtml().Where(l => l.StartsWith("http")).Select(l => new Url(l)));
+                lstLinks.Items.AddRange(HtmlAndLinksDic.GetLinks(Serie[lstCapitulos.SelectedIndex + 1]).Select(l => new Url(l)));
             }
         }
 
         private void lstLinks_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            Uri uri;
             if (!Equals(lstLinks.SelectedItem, default(Url)))
-                (lstLinks.SelectedItem as Url).Uri.Abrir();
+            {
+                uri= (lstLinks.SelectedItem as Url).Uri;
+                if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+                {
+                    if (MessageBox.Show($"¿Desea añadir '{uri.AbsoluteUri}' como link caido?","Añadir link a la lista de caidos",MessageBoxButton.YesNo,MessageBoxImage.Question) == MessageBoxResult.Yes)
+                    {
+                        HtmlAndLinksDic.AddLinkCaido(uri.AbsoluteUri);
+                        lstCapitulos_SelectionChanged();
+                    }
+                }else uri.Abrir();
+            }
         }
 
         private void btnPrecuela_Click(object sender, RoutedEventArgs e)

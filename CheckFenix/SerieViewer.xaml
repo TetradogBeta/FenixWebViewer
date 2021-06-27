@@ -8,7 +8,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-    <Image x:Name="imgSerie" MouseLeftButtonDown="imgSerie_MouseLeftButtonDown" MouseRightButtonDown="imgSerie_MouseLeftButtonDown"/>
+    <Image x:Name="imgSerie" MouseLeftButtonDown="imgSerie_MouseButtonDown" MouseRightButtonDown="imgSerie_MouseButtonDown"/>
         <wpf:SwitchImg x:Name="btnFavorito"  Height="50" Width="50" SwitchChanged="btnFavorito_SwitchChanged"  VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
     </Grid>
 </UserControl>

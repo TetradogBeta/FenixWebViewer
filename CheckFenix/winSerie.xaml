@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CheckFenix"
         mc:Ignorable="d"
         Title="Serie" MinHeight="317" MinWidth="636.7" Height="317" Width="636.7">
     <Grid>
@@ -16,7 +17,7 @@
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
-            <Image x:Name="imgSerie"/>
+            <local:SerieViewer x:Name="imgSerie" AbrirSerieAlHacerClick="False" CargarImagenFull="True" />
             <Grid x:Name="gFechaOFinalizado" Grid.Row="1">
                 <Viewbox >
                     <TextBlock x:Name="tbFechaNextOFinalizado" Foreground = "White"/>
@@ -34,19 +35,19 @@
         <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
-                    <RowDefinition/>
+                    <RowDefinition x:Name="rdCapitulos"/>
                 </Grid.RowDefinitions>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <TextBlock x:Name="tbDesc" TextWrapping="Wrap" FontSize="21"/>
                 </ScrollViewer>
 
-                <Grid Grid.Row="1">
+                <Grid x:Name="gCapitulos" Grid.Row="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <ListBox x:Name="lstCapitulos" FontSize="21" SelectionChanged="lstCapitulos_SelectionChanged"/>
-                <ListBox x:Name="lstLinks" FontSize="21" Grid.Column="1"   SelectionChanged="lstLinks_SelectionChanged" ToolTip="Recuerda que los links pueden estar caidos!"/>
+                <ListBox x:Name="lstLinks" FontSize="21" Grid.Column="1"   SelectionChanged="lstLinks_SelectionChanged" ToolTip="Recuerda que los links pueden estar caidos! manten ctrl  para añadir a links caidos"/>
                 </Grid>
             </Grid>
     </Grid>

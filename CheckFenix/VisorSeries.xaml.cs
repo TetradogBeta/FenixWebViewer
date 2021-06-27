@@ -21,11 +21,16 @@ namespace CheckFenix
     /// </summary>
     public partial class VisorSeries : UserControl
     {
+        private int page;
+
         public VisorSeries()
         {
             InitializeComponent();
             TotalPage = 12;
             Page = 0;
+            TotalRows = 2;
+            MostrarFavorito = true;
+            UltimaPaginaSinAcabar = -1;
         }
         public VisorSeries(IEnumerable<Serie> series)
         {
@@ -33,18 +38,35 @@ namespace CheckFenix
             Refresh();
         }
         public IEnumerable<Serie> Series { get; set; }
+
+        public int TotalRows { get; set; }
         public int TotalPage { get; set; }
-        public int Page { get; set; }
+        public int Page { get => page; set { page = UltimaPaginaSinAcabar < 0?value: value <= UltimaPaginaSinAcabar?value:UltimaPaginaSinAcabar; } }
+        public bool MostrarFavorito { get; set; }
+        int UltimaPaginaSinAcabar { get; set; }
         public async Task Refresh()
         {
+            SerieViewer visorSerie;
             IEnumerable<Serie> series = Series.Skip(Page * TotalPage).Take(TotalPage);
-
-            ugSeries.Children.Clear();
-            foreach (Serie serie in series)
+            if (UltimaPaginaSinAcabar < 0 || Page <= UltimaPaginaSinAcabar)
             {
-                ugSeries.Children.Add(new SerieViewer(serie));
+                ugSeries.Rows = TotalRows;
+                ugSeries.Children.Clear();
+                foreach (Serie serie in series)
+                {
+                    visorSerie = new SerieViewer(serie) { MostarFavorito = MostrarFavorito };
+                    await visorSerie.Refresh();
+                    ugSeries.Children.Add(visorSerie);
+                }
+                if (ugSeries.Children.Count == 0)
+                {
+                    UltimaPaginaSinAcabar = Page - 1;
+                    Page--;
+                    Refresh();
+                }
+                else if (ugSeries.Children.Count < TotalPage)
+                    UltimaPaginaSinAcabar = Page;
             }
-
 
         }
 

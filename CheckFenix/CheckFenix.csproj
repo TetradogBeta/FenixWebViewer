@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CargarBD\CheckFenix.CargarBD.csproj" />
     <ProjectReference Include="..\CheckFenix.Core\CheckFenix.Core.csproj" />
   </ItemGroup>
 

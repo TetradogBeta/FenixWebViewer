@@ -1,4 +1,6 @@
-﻿using CheckFenix.Core;
+﻿using CargarBD;
+using CheckFenix.CargarBD;
+using CheckFenix.Core;
 using Gabriel.Cat.S.Extension;
 using System;
 using System.Collections.Generic;
@@ -23,42 +25,40 @@ namespace CheckFenix
     /// </summary>
     public partial class MainWindow : Window
     {
+        const string URLANIMEFENIX = "https://www.animefenix.com/";
         const int CAPITULOSACTUALESPAGE = 0;
         const int SERIESACTUALESPAGE = 1;
         const int ALLSERIESPAGE = 2;
         const int FAVORITOSPAGE = 3;
-        const string CARGANDO = "Cargando";
-        const string TITULO = "AnimeFenix Desktop 1.4beta";
+        const int PROXIMANENTEPAGE = 4;
 
-        Task initSeries,initAllSeries;
+        const string CARGANDO = "Cargando";
+        const string TITULO = "AnimeFenix Desktop 1.4";
+
+
         public MainWindow()
         {
-            InitializeComponent();
             Title = TITULO;
-            initSeries = new Task(() => { SeriesActuales.ToArray(); });
-            initSeries.Start();
-            initAllSeries = new Task(() => { AllSeries.Take(visorTodasLasSeries.TotalPage * 3).ToArray(); });
-            initAllSeries.Start();
+            InitializeComponent();
+
+            InitUpdate = new Task(new Action(() => { Program.Main(URLANIMEFENIX); Context = new Context(); }));
+            InitUpdate.Start();
         }
 
-
-
-        public IEnumerable<Capitulo> CapitulosActuales => Capitulo.GetCapitulosActuales(HtmlAndLinksDic.URLANIMEFENIX);
-        public IEnumerable<Serie> SeriesActuales
+        Task InitUpdate { get; set; }
+        public Context Context { get; set; }
+        public IEnumerable<Capitulo> CapitulosActuales => Capitulo.GetCapitulosHome(URLANIMEFENIX);
+        public IEnumerable<Serie> SeriesEnEmision => Serie.GetSeriesEmision(URLANIMEFENIX).Where(s=>s.Total>0);
+        public IEnumerable<Serie> SeriesEnCuarentena => Serie.GetSeriesCuarentena(URLANIMEFENIX);
+        public IEnumerable<Serie> ProximasSeries => Serie.GetSeriesEmision(URLANIMEFENIX).Where(s => s.Total == 0);
+        public IEnumerable<Serie> SeriesFinalizadas
         {
             get
             {
-                SortedList<string, string> dic = new SortedList<string, string>();
-                return CapitulosActuales.Select(s => s.Parent).Where(c =>
-                {
-                    bool exist = dic.ContainsKey(c.Name);
-                    if (!exist)
-                        dic.Add(c.Name, c.Name);
-                    return !exist;
-                });
+                InitUpdate.Wait();
+                return Context.Series.Select(serie => new Serie(new Uri(serie.Pagina)) { Picture = new Uri(serie.Picture) });
             }
         }
-        public IEnumerable<Serie> AllSeries => Serie.GetAllSeries();
 
         public IEnumerable<Serie> Favorites => Serie.GetFavoritos();
 
@@ -74,25 +74,29 @@ namespace CheckFenix
 
                     break;
                 case SERIESACTUALESPAGE:
-                    visorSeriesActuales.Series = SeriesActuales;
+                    visorSeriesEnEmision.Series = SeriesEnEmision;
                     Title = CARGANDO;
-                    initSeries.Wait();
-                    visorSeriesActuales.Refresh().ContinueWith(AcabaDeCargar());
+                    visorSeriesEnEmision.Refresh().ContinueWith(AcabaDeCargar());
 
 
                     break;
                 case ALLSERIESPAGE:
 
-                    visorTodasLasSeries.Series = AllSeries;
+                    visorSeriesFinalizadas.Series = SeriesFinalizadas;
                     Title = CARGANDO;
-                    initAllSeries.Wait();
-                    visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
+                    visorSeriesFinalizadas.Refresh().ContinueWith(AcabaDeCargar());
                     break;
                 case FAVORITOSPAGE:
 
                     visorSeriesFavoritas.Series = Favorites;
                     Title = CARGANDO;
                     visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar());
+                    break;
+                case PROXIMANENTEPAGE:
+
+                    visorSeriesParaSalir.Series = ProximasSeries;
+                    Title = CARGANDO;
+                    visorSeriesParaSalir.Refresh().ContinueWith(AcabaDeCargar());
                     break;
             }
 
@@ -108,51 +112,47 @@ namespace CheckFenix
             Action act = () => Title = TITULO;
             await Dispatcher.BeginInvoke(act);
         }
-
+        private void Window_KeyDown_Gen(object sender, KeyEventArgs e)
+        {
+            Window_KeyDown((tbMain.SelectedItem as TabItem).Content, e);
+        }
+        private void visorSeriesEnEmision_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+           MoverVisor((tbMain.SelectedItem as TabItem).Content, e.Delta>0?Key.Up:Key.Down);
+        }
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-          
             if (e.Key == Key.F5)
             {
-    
+
                 tbMain_SelectionChanged();
             }
-            else if (tbMain.SelectedIndex == ALLSERIESPAGE)
+            else
             {
-                if (e.Key.Equals(Key.Up))
-                {
-                    if (visorTodasLasSeries.Page > 0)
-                    {
-                        visorTodasLasSeries.Page--;
-                        Title = CARGANDO;
-                        visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
-
-                    }
-                }
-                else if (e.Key.Equals(Key.Down))
-                {
-                    visorTodasLasSeries.Page++;
-                    Title = CARGANDO;
-                    visorTodasLasSeries.Refresh().ContinueWith(AcabaDeCargar());
-                }
+                MoverVisor(sender, e.Key);
             }
-            else if (tbMain.SelectedIndex == FAVORITOSPAGE)
+
+        }
+        void MoverVisor(object sender,Key e)
+        {
+            VisorSeries visor = sender as VisorSeries;
+            if (!Equals(visor, default))
             {
-                if (e.Key.Equals(Key.Up))
+                if (e.Equals(Key.Up))
                 {
-                    if (visorSeriesFavoritas.Page > 0)
+                    if (visor.Page > 0)
                     {
-                        visorSeriesFavoritas.Page--;
+                        visor.Page--;
                         Title = CARGANDO;
-                        visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar());
+                        visor.Refresh().ContinueWith(AcabaDeCargar());
 
                     }
                 }
-                else if (e.Key.Equals(Key.Down))
+                else if (e.Equals(Key.Down))
                 {
-                    visorSeriesFavoritas.Page++;
+                    visor.Page++;
                     Title = CARGANDO;
-                    visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar());
+                    visor.Refresh().ContinueWith(AcabaDeCargar());
                 }
             }
         }
@@ -166,7 +166,9 @@ namespace CheckFenix
             Serie.SaveCache();
             HtmlAndLinksDic.SaveCache();
 
-           
+
         }
+
+   
     }
 }

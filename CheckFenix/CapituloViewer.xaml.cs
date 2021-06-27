@@ -49,7 +49,7 @@ namespace CheckFenix
 
         private void imgCapitulo_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            new winSerie(Capitulo.Parent).Show();
+            new winSerie(Capitulo.Serie).Show();
         }
     }
 }

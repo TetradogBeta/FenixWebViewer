@@ -5,23 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CheckFenix"
         mc:Ignorable="d"
-        Height="450" Width="800" KeyDown="Window_KeyDown" Closing="Window_Closing" >
+        Height="450" Width="800" KeyDown="Window_KeyDown_Gen" Closing="Window_Closing" >
     <TabControl x:Name="tbMain" SelectionChanged="tbMain_SelectionChanged">
-        <TabItem Header="Capitulos Actuales">
+        <TabItem Header="Capitulos Nuevos">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <local:VisorCapitulos x:Name="visorCapitulosActuales" TotalPage="100"/>
             </ScrollViewer>
         </TabItem>
-        <TabItem Header="Series Actuales">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <local:VisorSeries x:Name="visorSeriesActuales" KeyDown="Window_KeyDown" TotalPage="50"/>
-            </ScrollViewer>
+        <TabItem Header="En Emisión">
+            <local:VisorSeries x:Name="visorSeriesEnEmision" KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
         </TabItem>
-        <TabItem Header="Todas las Series">
-            <local:VisorSeries x:Name="visorTodasLasSeries"  KeyDown="Window_KeyDown" />
+        <TabItem Header="Finalizadas">
+            <local:VisorSeries x:Name="visorSeriesFinalizadas"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
         </TabItem>
-        <TabItem Header="Favoritos">
-            <local:VisorSeries x:Name="visorSeriesFavoritas"  KeyDown="Window_KeyDown" />
+        <TabItem Header="Favoritas">
+            <local:VisorSeries x:Name="visorSeriesFavoritas" MostrarFavorito="False"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
+        </TabItem>
+        <TabItem Header="Próximamente">
+            <local:VisorSeries x:Name="visorSeriesParaSalir"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
         </TabItem>
     </TabControl>
 </Window>

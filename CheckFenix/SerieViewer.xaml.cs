@@ -1,5 +1,6 @@
 ﻿using CheckFenix.Core;
 using Gabriel.Cat.S.Extension;
+using Gabriel.Cat.S.Utilitats;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,10 +24,13 @@ namespace CheckFenix
     {
         static ImageSource ImgOn = Resource.corazonOn.ToImageSource();
         static ImageSource ImgOff = Resource.corazonOff.ToImageSource();
+        static LlistaOrdenada<string, ImageSource> DicImgs = new LlistaOrdenada<string, ImageSource>();
         public SerieViewer()
         {
             InitializeComponent();
-            
+            AbrirSerieAlHacerClick = true;
+            MostarFavorito = true;
+            CargarImagenFull = false;
             btnFavorito.ImgOn = ImgOn;
             btnFavorito.ImgOff = ImgOff;
         }
@@ -36,16 +40,31 @@ namespace CheckFenix
             Refresh();
         }
         public Serie Serie { get; set; }
+        public bool AbrirSerieAlHacerClick { get; set; }
+        public bool MostarFavorito { get; set; }
+        public bool CargarImagenFull { get; set; }
         public async Task Refresh()
         {
-            imgSerie.SetImage(Serie.Image);
+            if (CargarImagenFull)
+            {
+                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, Serie.Picture.GetBitmap().ToImageSource());
+            }
+            else if (!DicImgs.ContainsKey(Serie.Picture.AbsoluteUri))
+            {
+                DicImgs.Add(Serie.Picture.AbsoluteUri, Serie.Image.ToImageSource());
+            }
+            imgSerie.Source = DicImgs[Serie.Picture.AbsoluteUri];
             imgSerie.ToolTip = Serie.Name;
             btnFavorito.EstadoOn = Serie.IsFavorito;
+            if (MostarFavorito)
+                btnFavorito.Visibility = Visibility.Visible;
+            else btnFavorito.Visibility = Visibility.Hidden;
         }
 
-        private void imgSerie_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void imgSerie_MouseButtonDown(object sender, MouseButtonEventArgs e)
         {
-            new winSerie(Serie).Show();
+            if(AbrirSerieAlHacerClick)
+               new winSerie(Serie).Show();
         }
 
         private void btnFavorito_SwitchChanged(object sender, bool e)
