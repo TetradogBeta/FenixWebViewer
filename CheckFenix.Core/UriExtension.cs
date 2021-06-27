@@ -9,16 +9,24 @@ namespace CheckFenix.Core
     public static class UriExtension
     {
         static Semaphore smDownloading = new Semaphore(1, 1);
+        public static async Task<string> DownloadStringAsync(this Uri url)
+        {
+            string result=string.Empty;
+            Task download = new Task(new Action(() =>result= url.DownloadString()));
+            await download;
+            return result;
+        }
         public static string DownloadString(this Uri url)
         {
             string html;
             WebClient wbClient;
+    
             try
             {
                 smDownloading.WaitOne();
                 wbClient = new WebClient();
                 wbClient.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-                html =wbClient.DownloadString(url);
+                html = wbClient.DownloadString(url);
             }
             catch
             {

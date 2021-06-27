@@ -37,7 +37,6 @@ namespace CheckFenix
         public SerieViewer(Serie serie):this()
         {
             Serie = serie;
-            Refresh();
         }
         public Serie Serie { get; set; }
         public bool AbrirSerieAlHacerClick { get; set; }
@@ -47,11 +46,11 @@ namespace CheckFenix
         {
             if (CargarImagenFull)
             {
-                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, Serie.Picture.GetBitmap().ToImageSource());
+                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, (await Serie.Picture.GetBitmapAsnyc()).ToImageSource());
             }
             else if (!DicImgs.ContainsKey(Serie.Picture.AbsoluteUri))
             {
-                DicImgs.Add(Serie.Picture.AbsoluteUri, Serie.Image.ToImageSource());
+                DicImgs.Add(Serie.Picture.AbsoluteUri,(await Serie.GetImage()).ToImageSource());
             }
             imgSerie.Source = DicImgs[Serie.Picture.AbsoluteUri];
             imgSerie.ToolTip = Serie.Name;

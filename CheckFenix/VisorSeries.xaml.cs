@@ -32,11 +32,7 @@ namespace CheckFenix
             MostrarFavorito = true;
             UltimaPaginaSinAcabar = -1;
         }
-        public VisorSeries(IEnumerable<Serie> series)
-        {
-            Series = series;
-            Refresh();
-        }
+
         public IEnumerable<Serie> Series { get; set; }
 
         public int TotalRows { get; set; }
@@ -47,22 +43,24 @@ namespace CheckFenix
         public async Task Refresh()
         {
             SerieViewer visorSerie;
-            IEnumerable<Serie> series = Series.Skip(Page * TotalPage).Take(TotalPage);
+            IEnumerable<Serie> series;
+
             if (UltimaPaginaSinAcabar < 0 || Page <= UltimaPaginaSinAcabar)
             {
+                series = Series.Skip(Page * TotalPage).Take(TotalPage);
                 ugSeries.Rows = TotalRows;
                 ugSeries.Children.Clear();
                 foreach (Serie serie in series)
                 {
                     visorSerie = new SerieViewer(serie) { MostarFavorito = MostrarFavorito };
-                    await visorSerie.Refresh();
+                    visorSerie.Refresh();
                     ugSeries.Children.Add(visorSerie);
                 }
                 if (ugSeries.Children.Count == 0)
                 {
                     UltimaPaginaSinAcabar = Page - 1;
                     Page--;
-                    Refresh();
+                    await Refresh();
                 }
                 else if (ugSeries.Children.Count < TotalPage)
                     UltimaPaginaSinAcabar = Page;

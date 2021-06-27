@@ -7,13 +7,14 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace CheckFenix.Core
 {
     public class Capitulo
     {
         public static string CacheFolder = "CacheCapitulos";
-        public static List<string> DefaultServerPreference = new List<string>() { "mega.nz", "www.burstcloud.co" };
+
         static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; }
 
         List<string> links;
@@ -62,16 +63,7 @@ namespace CheckFenix.Core
             } 
             set => picture = value;
         }
-        public Bitmap Image
-        {
-            get
-            {
-                string url = Path.GetFileName(Picture.AbsoluteUri);
-                if (!DicImagenes.ContainsKey(url))
-                    DicImagenes.Add(url, Picture.GetBitmap().Escala(0.35f));
-                return DicImagenes[url];
-            }
-        }
+
 
         public Uri PaginaSerie
         {
@@ -109,17 +101,26 @@ namespace CheckFenix.Core
             }
             set => links = value;
         }
+        public async Task<Bitmap> GetImage()
+        {
 
+            string url = Path.GetFileName(Picture.AbsoluteUri);
+            if (!DicImagenes.ContainsKey(url))
+                DicImagenes.Add(url, (await Picture.GetBitmapAsnyc()).Escala(0.35f));
+            return DicImagenes[url];
+
+        }
         public void Reload()
         {
             string url;
             string html;
+            string htmlUri;
             Regex regex;
-            Match match;
+            Match match,matchUrl;
 
             try
             {
-                html = HtmlAndLinksDic.GetHtmlServer(Pagina);
+                html =Pagina.DownloadString();
                
             }
             catch
@@ -132,27 +133,36 @@ namespace CheckFenix.Core
 
             while (match.Success)
             {
-                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value;
-                links.Add(url);
+                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value.Replace("&amp;","&");
+                try
+                {
+                    htmlUri = new Uri(url).DownloadString();
+                    matchUrl = regex.Match(htmlUri);
+                    if (matchUrl.Success)
+                    {
+                        url = HtmlNode.CreateNode("<iframe " + matchUrl.Value).Attributes["src"].Value.Replace("&amp;", "&");
+                        
+                        links.Add(url);
+                    }
+                }
+                catch
+                {
+
+                }
+               
                 match = match.NextMatch();
 
 
             }
 
         }
-        public bool AbrirLink(IEnumerable<string> serverPreference =default)
+        public bool AbrirLink()
         {
             string url;
-            if (Equals(serverPreference, default))
-            {
-                serverPreference = DefaultServerPreference;
-            }
 
-            url = HtmlAndLinksDic.GetLinks(this).Where(link => serverPreference.Any(server=>link.Contains(server))).FirstOrDefault();
-            if (string.IsNullOrEmpty(url))
-            {
-                url = HtmlAndLinksDic.GetLinks(this).FirstOrDefault();
-            }
+
+            url =Links.FirstOrDefault();
+
             if (!string.IsNullOrEmpty(url))
             {
                 new Uri(url).Abrir();

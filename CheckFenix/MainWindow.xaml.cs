@@ -33,22 +33,40 @@ namespace CheckFenix
         const int PROXIMANENTEPAGE = 4;
 
         const string CARGANDO = "Cargando";
-        const string TITULO = "AnimeFenix Desktop 1.4";
-
+        const string TITULO = "AnimeFenix Desktop 1.4 Beta 1";
+        const string FINALIZADAS = "Finalizadas";
 
         public MainWindow()
         {
             Title = TITULO;
             InitializeComponent();
 
-            InitUpdate = new Task(new Action(() => { Program.Main(URLANIMEFENIX); Context = new Context(); }));
+            InitUpdate = new Task(new Action(() =>
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    tbFinalizadas.Header = CARGANDO;
+                    tbFinalizadas.IsEnabled = false;
+                }));
+
+                Program.Main(URLANIMEFENIX);
+                Context = new Context();
+
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    tbFinalizadas.Header = FINALIZADAS;
+                    tbFinalizadas.IsEnabled = true;
+                }));
+
+            }));
             InitUpdate.Start();
         }
 
         Task InitUpdate { get; set; }
         public Context Context { get; set; }
+
         public IEnumerable<Capitulo> CapitulosActuales => Capitulo.GetCapitulosHome(URLANIMEFENIX);
-        public IEnumerable<Serie> SeriesEnEmision => Serie.GetSeriesEmision(URLANIMEFENIX).Where(s=>s.Total>0);
+        public IEnumerable<Serie> SeriesEnEmision => Serie.GetSeriesEmision(URLANIMEFENIX).Where(s => s.Total > 0);
         public IEnumerable<Serie> SeriesEnCuarentena => Serie.GetSeriesCuarentena(URLANIMEFENIX);
         public IEnumerable<Serie> ProximasSeries => Serie.GetSeriesEmision(URLANIMEFENIX).Where(s => s.Total == 0);
         public IEnumerable<Serie> SeriesFinalizadas
@@ -56,7 +74,7 @@ namespace CheckFenix
             get
             {
                 InitUpdate.Wait();
-                return Context.Series.Select(serie => new Serie(new Uri(serie.Pagina)) { Picture = new Uri(serie.Picture) });
+                return Context.Series.Select(serie => new Serie(new Uri(serie.Pagina)) { Picture = new Uri(serie.Picture),Name=serie.Name });
             }
         }
 
@@ -70,13 +88,13 @@ namespace CheckFenix
                 case CAPITULOSACTUALESPAGE:
                     visorCapitulosActuales.Capitulos = CapitulosActuales;
                     Title = CARGANDO;
-                    visorCapitulosActuales.Refresh().ContinueWith(AcabaDeCargar());
+                    visorCapitulosActuales.Refresh().ContinueWith(AcabaDeCargar()).Wait();
 
                     break;
                 case SERIESACTUALESPAGE:
                     visorSeriesEnEmision.Series = SeriesEnEmision;
                     Title = CARGANDO;
-                    visorSeriesEnEmision.Refresh().ContinueWith(AcabaDeCargar());
+                    visorSeriesEnEmision.Refresh().ContinueWith(AcabaDeCargar()).Wait();
 
 
                     break;
@@ -84,19 +102,19 @@ namespace CheckFenix
 
                     visorSeriesFinalizadas.Series = SeriesFinalizadas;
                     Title = CARGANDO;
-                    visorSeriesFinalizadas.Refresh().ContinueWith(AcabaDeCargar());
+                    visorSeriesFinalizadas.Refresh().ContinueWith(AcabaDeCargar()).Wait();
                     break;
                 case FAVORITOSPAGE:
 
                     visorSeriesFavoritas.Series = Favorites;
                     Title = CARGANDO;
-                    visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar());
+                    visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar()).Wait();
                     break;
                 case PROXIMANENTEPAGE:
 
                     visorSeriesParaSalir.Series = ProximasSeries;
                     Title = CARGANDO;
-                    visorSeriesParaSalir.Refresh().ContinueWith(AcabaDeCargar());
+                    visorSeriesParaSalir.Refresh().ContinueWith(AcabaDeCargar()).Wait();
                     break;
             }
 
@@ -118,7 +136,7 @@ namespace CheckFenix
         }
         private void visorSeriesEnEmision_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-           MoverVisor((tbMain.SelectedItem as TabItem).Content, e.Delta>0?Key.Up:Key.Down);
+            MoverVisor((tbMain.SelectedItem as TabItem).Content, e.Delta > 0 ? Key.Up : Key.Down);
         }
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
@@ -133,7 +151,7 @@ namespace CheckFenix
             }
 
         }
-        void MoverVisor(object sender,Key e)
+        void MoverVisor(object sender, Key e)
         {
             VisorSeries visor = sender as VisorSeries;
             if (!Equals(visor, default))
@@ -164,11 +182,11 @@ namespace CheckFenix
             Title = "Guardando Cache!";
             Capitulo.SaveCache();
             Serie.SaveCache();
-            HtmlAndLinksDic.SaveCache();
+        
 
 
         }
 
-   
+
     }
 }

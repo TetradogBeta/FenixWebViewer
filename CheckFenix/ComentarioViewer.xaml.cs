@@ -3,6 +3,7 @@ using Gabriel.Cat.S.Extension;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -30,9 +31,9 @@ namespace CheckFenix
             Refresh();
         }
         public Comentario Comentario { get; set; }
-        public void Refresh()
+        public async Task Refresh()
         {
-            imgAvatar.SetImage(Comentario.Image);
+            imgAvatar.SetImage(await Comentario.GetImage());
             tbNombre.Text = Comentario.Name;
             tbComentario.Text = Comentario.Mensaje;
         }

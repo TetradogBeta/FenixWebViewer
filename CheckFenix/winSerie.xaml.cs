@@ -90,7 +90,7 @@ namespace CheckFenix
             if (lstCapitulos.SelectedIndex >= 0 && lstCapitulos.SelectedIndex < Serie.Total)
             {
                 lstLinks.Items.Clear();
-                lstLinks.Items.AddRange(HtmlAndLinksDic.GetLinks(Serie[lstCapitulos.SelectedIndex + 1]).Select(l => new Url(l)));
+                lstLinks.Items.AddRange(Serie[lstCapitulos.SelectedIndex + 1].Links.Where(l=>l.StartsWith("http")).Select(l => new Url(l)));
             }
         }
 
@@ -100,14 +100,7 @@ namespace CheckFenix
             if (!Equals(lstLinks.SelectedItem, default(Url)))
             {
                 uri= (lstLinks.SelectedItem as Url).Uri;
-                if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
-                {
-                    if (MessageBox.Show($"¿Desea añadir '{uri.AbsoluteUri}' como link caido?","Añadir link a la lista de caidos",MessageBoxButton.YesNo,MessageBoxImage.Question) == MessageBoxResult.Yes)
-                    {
-                        HtmlAndLinksDic.AddLinkCaido(uri.AbsoluteUri);
-                        lstCapitulos_SelectionChanged();
-                    }
-                }else uri.Abrir();
+                uri.Abrir();
             }
         }
 

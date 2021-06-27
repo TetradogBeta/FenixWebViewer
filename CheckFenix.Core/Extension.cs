@@ -4,15 +4,16 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Gabriel.Cat.S.Extension
 {
     public static class UriExtension
     {
-        public static Bitmap GetBitmap(this Uri url)
+        public static async Task<Bitmap> GetBitmapAsnyc(this Uri url)
         {
             System.Net.WebRequest request =System.Net.WebRequest.Create( url.AbsoluteUri);
-            System.Net.WebResponse response = request.GetResponse();
+            System.Net.WebResponse response =await request.GetResponseAsync();
             System.IO.Stream responseStream = response.GetResponseStream();
            return new Bitmap(responseStream);
         }

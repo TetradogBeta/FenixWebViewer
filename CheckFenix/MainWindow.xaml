@@ -15,7 +15,7 @@
         <TabItem Header="En Emisión">
             <local:VisorSeries x:Name="visorSeriesEnEmision" KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
         </TabItem>
-        <TabItem Header="Finalizadas">
+        <TabItem x:Name="tbFinalizadas" >
             <local:VisorSeries x:Name="visorSeriesFinalizadas"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
         </TabItem>
         <TabItem Header="Favoritas">

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CheckFenix.Core
 {
@@ -20,22 +21,23 @@ namespace CheckFenix.Core
             Mensaje = nodo.GetByClass("post-message").First().GetByTagName("p").First().InnerText;
         }
         public Uri Picture { get; set; }
-        public Bitmap Image
-        {
-            get {
 
-                string name = Path.GetFileName(Picture.AbsoluteUri);
-                if (!DicPic.ContainsKey(name))
-                {
-                    DicPic.Add(name, Picture.GetBitmap());
-                }
-                return DicPic[name];
-            
-            }
-        }
         public string Name { get; set; }
         public string Mensaje { get; set; }
 
+        public async Task<Bitmap> GetImage()
+        {
+
+
+            string name = Path.GetFileName(Picture.AbsoluteUri);
+            if (!DicPic.ContainsKey(name))
+            {
+                DicPic.Add(name, await Picture.GetBitmapAsnyc());
+            }
+            return DicPic[name];
+
+
+        }
         public static IEnumerable<Comentario> GetComentarios(IReadComentario reader,Uri page)
         {
             // post-list

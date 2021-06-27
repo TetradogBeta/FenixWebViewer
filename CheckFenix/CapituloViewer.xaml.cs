@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -29,12 +30,11 @@ namespace CheckFenix
         public CapituloViewer(Capitulo capitulo):this()
         {
             Capitulo = capitulo;
-            Refresh();
         }
         public Capitulo Capitulo { get; set; }
-        public void Refresh()
+        public async Task Refresh()
         {
-            imgCapitulo.SetImage(Capitulo.Image);
+            imgCapitulo.SetImage(await Capitulo.GetImage());
             imgCapitulo.ToolTip = Capitulo.Name;
             
         }
