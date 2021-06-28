@@ -44,16 +44,17 @@ namespace CheckFenix
         {
             SerieViewer visorSerie;
             IEnumerable<Serie> series;
-
+            List<Task> cargaSeries;
             if (UltimaPaginaSinAcabar < 0 || Page <= UltimaPaginaSinAcabar)
             {
+                cargaSeries = new List<Task>();
                 series = Series.Skip(Page * TotalPage).Take(TotalPage);
                 ugSeries.Rows = TotalRows;
                 ugSeries.Children.Clear();
                 foreach (Serie serie in series)
                 {
                     visorSerie = new SerieViewer(serie) { MostarFavorito = MostrarFavorito };
-                    visorSerie.Refresh();
+                    cargaSeries.Add(visorSerie.Refresh());
                     ugSeries.Children.Add(visorSerie);
                 }
                 if (ugSeries.Children.Count == 0)
@@ -64,7 +65,11 @@ namespace CheckFenix
                 }
                 else if (ugSeries.Children.Count < TotalPage)
                     UltimaPaginaSinAcabar = Page;
-            }
+                if (ugSeries.Children.Count > 0)
+                {
+                    await Task.WhenAll(cargaSeries);
+                }
+                }
 
         }
 

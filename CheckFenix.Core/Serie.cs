@@ -19,6 +19,8 @@ namespace CheckFenix.Core
         public static string FavoriteFile = "Favoritos.txt";
         private static LlistaOrdenada<string, bool> DicFavoritos { get; set; }
         private static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; }
+        public static LlistaOrdenada<string, Serie> DicSeriesCompleto { get; set; }
+        public static LlistaOrdenada<string, Serie> DicSeriesBasico { get; set; }
         public static IEnumerable<Serie> GetFavoritos() => DicFavoritos.Keys.Select(linkSerie => new Serie(new Uri(linkSerie)));
 
 
@@ -35,6 +37,8 @@ namespace CheckFenix.Core
 
         static Serie()
         {
+            DicSeriesBasico = new LlistaOrdenada<string, Serie>();
+            DicSeriesCompleto = new LlistaOrdenada<string, Serie>();
             DicImagenes = new LlistaOrdenada<string, Bitmap>();
             DicFavoritos = new LlistaOrdenada<string, bool>();
             if (Directory.Exists(CacheFolder))
@@ -57,7 +61,6 @@ namespace CheckFenix.Core
         {
             total = -1;
             Pagina = pagina;
-          
         }
         LlistaOrdenada<int, Capitulo> Capitulos { get; set; }
         public Capitulo this[int capitulo]
@@ -69,7 +72,7 @@ namespace CheckFenix.Core
                     Capitulos = new LlistaOrdenada<int, Capitulo>();
                 }
 
-                if (capitulo>Total)
+                if (capitulo > Total)
                 {
                     throw new CapituloNoEncontradoException(Finalizada);
                 }
@@ -77,7 +80,7 @@ namespace CheckFenix.Core
                 if (!Capitulos.ContainsKey(capitulo))
                 {
                     //lo cargo
-                    Capitulos.AddOrReplace(capitulo,new Capitulo(new Uri($"{Pagina.AbsoluteUri.Replace(Pagina.Host, $"{Pagina.Host}/ver")}-{capitulo}")));
+                    Capitulos.AddOrReplace(capitulo, new Capitulo(new Uri($"{Pagina.AbsoluteUri.Replace(Pagina.Host, $"{Pagina.Host}/ver")}-{capitulo}")));
                 }
 
                 return Capitulos.GetValue(capitulo);
@@ -88,7 +91,7 @@ namespace CheckFenix.Core
         {
             get
             {
-                CargarDatosSiEsNecesario();
+                CargarDatosBasicosOCompletosSiEsNecesario();
                 return name;
             }
             set => name = value;
@@ -97,7 +100,7 @@ namespace CheckFenix.Core
         {
             get
             {
-                CargarDatosSiEsNecesario();
+                CargarDatosBasicosOCompletosSiEsNecesario();
                 return description;
             }
             set => description = value;
@@ -159,7 +162,7 @@ namespace CheckFenix.Core
         public bool HasPrecuela => !Equals(PaginaPrecuela, default(Serie));
         public bool HasSecuela => !Equals(PaginaSecuela, default(Serie));
 
-        public bool Finalizada => !NextChapter.HasValue ||NextChapter.Value<DateTime.Now;
+        public bool Finalizada => !NextChapter.HasValue || NextChapter.Value < DateTime.Now;
         public Uri PaginaUltimo => new Uri($"{Pagina.AbsoluteUri}-{Total}");
         public Capitulo Ultimo
         {
@@ -244,40 +247,72 @@ namespace CheckFenix.Core
             HtmlNode nodoSecuela;
             HtmlNode nodoFecha;
             HtmlNode nodoTotal;
+            Serie serie;
 
             if (total < 0)
             {
-                pagina = new HtmlDocument().LoadUrl(Pagina);
-                nodoNombre = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
-                nodoDesc = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
-                nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
-                nodoPrecuela = pagina.GetByTagName("li").Where(l => l.ChildNodes.Any(c => c.Name == "span" && c.InnerText.Contains("Precuela:"))).FirstOrDefault();
-                nodoSecuela = pagina.GetByTagName("li").Where(l => l.ChildNodes.Any(c => c.Name == "span" && c.InnerText.Contains("Secuela:"))).FirstOrDefault();
-                nodoFecha = pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Próximo")).FirstOrDefault();
-                nodoTotal = pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Episodios:")).FirstOrDefault();
-
-                if (!Equals(nodoFecha, default(HtmlNode)))
+                if (!DicSeriesCompleto.ContainsKey(Pagina.AbsoluteUri))
                 {
-                    NextChapter = DateTime.Parse(nodoFecha.NextSibling.OuterHtml);
+                    DicSeriesCompleto.Add(Pagina.AbsoluteUri, this);
+
+                    pagina = new HtmlDocument().LoadUrl(Pagina);
+                    nodoNombre = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
+                    nodoDesc = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
+                    nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
+                    nodoPrecuela = pagina.GetByTagName("li").Where(l => l.ChildNodes.Any(c => c.Name == "span" && c.InnerText.Contains("Precuela:"))).FirstOrDefault();
+                    nodoSecuela = pagina.GetByTagName("li").Where(l => l.ChildNodes.Any(c => c.Name == "span" && c.InnerText.Contains("Secuela:"))).FirstOrDefault();
+                    nodoFecha = pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Próximo")).FirstOrDefault();
+                    nodoTotal = pagina.GetByTagName("span").Where(m => m.InnerText.Contains("Episodios:")).FirstOrDefault();
+
+                    if (!Equals(nodoFecha, default(HtmlNode)))
+                    {
+                        NextChapter = DateTime.Parse(nodoFecha.NextSibling.OuterHtml);
+                    }
+
+
+                    Total = int.Parse(nodoTotal.NextSibling.OuterHtml);
+
+                    Name = nodoNombre.Attributes["content"].Value;
+                    Description = nodoDesc.Attributes["content"].Value.Replace("&quot;", "");
+                    Picture = new Uri(nodoPicture.ChildNodes[1].Attributes["src"].Value);
+                    //Precuela:
+                    if (!Equals(nodoPrecuela, default(HtmlNode)))
+                    {
+                        PaginaPrecuela = new Uri(nodoPrecuela.GetByTagName("a").First().Attributes["href"].Value);
+                    }
+                    //Secuela:
+                    if (!Equals(nodoSecuela, default(HtmlNode)))
+                    {
+                        PaginaSecuela = new Uri(nodoSecuela.GetByTagName("a").First().Attributes["href"].Value);
+                    }
+                }
+                else
+                {
+                    serie = DicSeriesCompleto[Pagina.AbsoluteUri];
+                    Name = serie.Name;
+                    Total = serie.Total;
+                    PaginaPrecuela = serie.PaginaPrecuela;
+                    PaginaSecuela = serie.PaginaSecuela;
+                    Picture = serie.Picture;
+                    Description = serie.Description;
+
                 }
 
-
-                Total = int.Parse(nodoTotal.NextSibling.OuterHtml);
-
-                Name = nodoNombre.Attributes["content"].Value;
-                Description = nodoDesc.Attributes["content"].Value.Replace("&quot;", "");
-                Picture = new Uri(nodoPicture.ChildNodes[1].Attributes["src"].Value);
-                //Precuela:
-                if (!Equals(nodoPrecuela, default(HtmlNode)))
+            }
+        }
+        private void CargarDatosBasicosOCompletosSiEsNecesario()
+        {
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(description))
+            {
+                if (DicSeriesBasico.ContainsKey(Pagina.AbsoluteUri))
                 {
-                    PaginaPrecuela = new Uri(nodoPrecuela.GetByTagName("a").First().Attributes["href"].Value);
+                    name = DicSeriesBasico[Pagina.AbsoluteUri].Name;
+                    description = DicSeriesBasico[Pagina.AbsoluteUri].Description;
                 }
-                //Secuela:
-                if (!Equals(nodoSecuela, default(HtmlNode)))
+                else
                 {
-                    PaginaSecuela = new Uri(nodoSecuela.GetByTagName("a").First().Attributes["href"].Value);
+                    CargarDatosSiEsNecesario();
                 }
-
             }
         }
         public bool UltimoEnParrilla()
@@ -289,9 +324,9 @@ namespace CheckFenix.Core
             return Name;
         }
 
-        public static IEnumerable<Serie> GetSeriesCuarentena(string urlFenix,int startPage=1, bool upToDown = true, int maxPages = -1)
+        public static IEnumerable<Serie> GetSeriesCuarentena(string urlFenix, int startPage = 1, bool upToDown = true, int maxPages = -1)
         {
-            return IGetSeries(urlFenix, "estado%5B%5D=4&order=default", startPage,upToDown,maxPages);
+            return IGetSeries(urlFenix, "estado%5B%5D=4&order=default", startPage, upToDown, maxPages);
         }
         public static IEnumerable<Serie> GetSeriesProximanente(string urlFenix, int startPage = 1, bool upToDown = true, int maxPages = -1)
         {
@@ -303,19 +338,20 @@ namespace CheckFenix.Core
         }
         public static IEnumerable<Serie> GetSeriesFinalizadas(string urlFenix, int startPage = 1, bool upToDown = true, int maxPages = -1)
         {
-            return IGetSeries(urlFenix, "estado%5B%5D=2&order=default",startPage, upToDown, maxPages);//estas no van a cambiar, así que se deberian de guardar!
+            return IGetSeries(urlFenix, "estado%5B%5D=2&order=default", startPage, upToDown, maxPages);//estas no van a cambiar, así que se deberian de guardar!
         }
-         static IEnumerable<Serie> IGetSeries(string urlFenix,string filtro, int startPage = 1,bool upToDown=true,int maxPages=-1)
+        static IEnumerable<Serie> IGetSeries(string urlFenix, string filtro, int startPage = 1, bool upToDown = true, int maxPages = -1)
         {
 
             const string CLASE = "serie-card";
 
             HtmlNode[] nodosSeries;
-       
-        
+            HtmlNode nodoLink;
+            string uri, name;
+
             int paginaActual = startPage;
             int totalPaginas = 0;
-            string urlBase =$"{urlFenix}animes?{filtro}&page=";
+            string urlBase = $"{urlFenix}animes?{filtro}&page=";
             do
             {
                 //no se puede guardar porque la pagina 1 es la más nueva ergo los indices cambian
@@ -325,34 +361,39 @@ namespace CheckFenix.Core
                 {
                     for (int i = 0; i < nodosSeries.Length; i++)
                     {
-                        
-                        yield return GetSerie(nodosSeries[i]);
+                        nodoLink = nodosSeries[i].GetByTagName("a").First();
+                        uri= nodoLink.Attributes["href"].Value;
+                        name = nodoLink.Attributes["title"].Value;
+                        yield return DicSeriesCompleto.ContainsKey(uri)?DicSeriesCompleto[uri]: DicSeriesBasico.ContainsKey(uri) ? DicSeriesBasico[uri]:GetSerie(nodosSeries[i],uri,name);
                     }
                 }
                 else
                 {
-                    for (int i = nodosSeries.Length-1; i>=0; i--)
+                    for (int i = nodosSeries.Length - 1; i >= 0; i--)
                     {
-                        yield return GetSerie(nodosSeries[i]);
+                        nodoLink = nodosSeries[i].GetByTagName("a").First();
+                        uri = nodoLink.Attributes["href"].Value;
+                        name = nodoLink.Attributes["title"].Value;
+                        yield return DicSeriesCompleto.ContainsKey(uri) ? DicSeriesCompleto[uri] : DicSeriesBasico.ContainsKey(uri) ? DicSeriesBasico[uri] : GetSerie(nodosSeries[i], uri, name);
                     }
                 }
                 paginaActual++;
                 totalPaginas++;
 
-            } while (nodosSeries.Length > 0 && (maxPages<0 || totalPaginas<maxPages));
+            } while (nodosSeries.Length > 0 && (maxPages < 0 || totalPaginas < maxPages));
 
         }
 
-        private static Serie GetSerie(HtmlNode nodoSerie)
+        private static Serie GetSerie(HtmlNode nodoSerie,string uri,string nombre)
         {
-            HtmlNode nodoLink;
+
             Serie serie;
-            nodoLink = nodoSerie.GetByTagName("a").First();
-            serie = new Serie(new Uri(nodoLink.Attributes["href"].Value));
-            serie.Name = nodoLink.Attributes["title"].Value;
+            
+            serie = new Serie(new Uri(uri));
+            serie.Name = nombre;
             serie.Description = nodoSerie.GetByClass("serie-card__information").First().GetByTagName("p").First().InnerText;
             serie.Picture = new Uri(nodoSerie.GetByTagName("img").First().Attributes["src"].Value);
-
+            DicSeriesBasico.AddOrReplace(uri, serie);
             return serie;
         }
         #region LastIndex
@@ -375,12 +416,12 @@ namespace CheckFenix.Core
         static int IGetLastIndex(string urlFenix, string filtro)
         {
             int index = 42;
-            while (!Equals(IGetSeries(urlFenix, filtro,index).FirstOrDefault(), default)) index++;
-            if(index>42)
-              index--;
+            while (!Equals(IGetSeries(urlFenix, filtro, index).FirstOrDefault(), default)) index++;
+            if (index > 42)
+                index--;
             while (Equals(IGetSeries(urlFenix, filtro, index).FirstOrDefault(), default)) index--;
             return index;
-         
+
         }
         #endregion
         public static void SaveFavoritos()
