@@ -254,6 +254,7 @@ namespace CheckFenix.Core
                 if (!DicSeriesCompleto.ContainsKey(Pagina.AbsoluteUri))
                 {
                     DicSeriesCompleto.Add(Pagina.AbsoluteUri, this);
+                    DicSeriesBasico.AddOrReplace(Pagina.AbsoluteUri, this);
 
                     pagina = new HtmlDocument().LoadUrl(Pagina);
                     nodoNombre = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
