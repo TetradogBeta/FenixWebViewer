@@ -13,37 +13,24 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections;
 
 namespace CheckFenix
 {
     /// <summary>
     /// Lógica de interacción para VisorCapitulos.xaml
     /// </summary>
-    public partial class VisorCapitulos : UserControl
+    public partial class VisorCapitulos : UserControl,IVisor
     {
         public VisorCapitulos()
         {
             InitializeComponent();
-            TotalPage = 9;
-            Page = 0;
-        }
-        public IEnumerable<Capitulo> Capitulos { get; set; }
-        public int TotalPage { get; set; }
-        public int Page { get; set; }
-        public async Task Refresh()
-        {
-            CapituloViewer capituloViewer;
-            IEnumerable<Capitulo> capitulos = Capitulos.Skip(Page * TotalPage).Take(TotalPage);
-            List<Task> cargaCapitulos = new List<Task>();
-            ugCapitulos.Children.Clear();
-            foreach (Capitulo capitulo in capitulos)
-            {
-                capituloViewer = new CapituloViewer(capitulo);
-                cargaCapitulos.Add(capituloViewer.Refresh());
-                ugCapitulos.Children.Add(capituloViewer);
-            }
-            await Task.WhenAll(cargaCapitulos);
+            visorCapitulos.Reader = (elements)=> (elements as IEnumerable<Capitulo>).Select(c => new CapituloViewer(c));
 
         }
+        public Visor Visor => visorCapitulos;
+        public IEnumerable<Capitulo> Capitulos { get => visorCapitulos.Elements as IEnumerable<Capitulo>; set => visorCapitulos.Elements = value; }
+
+       
     }
 }

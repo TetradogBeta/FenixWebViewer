@@ -18,7 +18,6 @@ namespace CheckFenix.Core
         public static string CacheFolder = "CacheSeries";
         public static string FavoriteFile = "Favoritos.txt";
         private static LlistaOrdenada<string, bool> DicFavoritos { get; set; }
-        private static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; }
         public static LlistaOrdenada<string, Serie> DicSeriesCompleto { get; set; }
         public static LlistaOrdenada<string, Serie> DicSeriesBasico { get; set; }
         public static IEnumerable<Serie> GetFavoritos() => DicFavoritos.Keys.Select(linkSerie => new Serie(new Uri(linkSerie)));
@@ -39,15 +38,7 @@ namespace CheckFenix.Core
         {
             DicSeriesBasico = new LlistaOrdenada<string, Serie>();
             DicSeriesCompleto = new LlistaOrdenada<string, Serie>();
-            DicImagenes = new LlistaOrdenada<string, Bitmap>();
             DicFavoritos = new LlistaOrdenada<string, bool>();
-            if (Directory.Exists(CacheFolder))
-            {
-                //cargo el cache!
-                foreach (string item in Directory.GetFiles(CacheFolder))
-                    DicImagenes.Add(Path.GetFileName(item), new Bitmap(item));
-
-            }
 
             if (File.Exists(FavoriteFile))
             {
@@ -220,22 +211,32 @@ namespace CheckFenix.Core
         }
         public async Task<Bitmap> GetImage()
         {
+            Bitmap imgSerie;
+            string fileName = Path.GetFileName(Picture.AbsoluteUri);
+            string pathFile = Path.Combine(CacheFolder, fileName);
 
-            Bitmap bmp;
-            string url = Path.GetFileName(Picture.AbsoluteUri);
+            if (!Directory.Exists(CacheFolder))
+                Directory.CreateDirectory(CacheFolder);
 
-            if (!DicImagenes.ContainsKey(url))
-                DicImagenes.Add(url, (await Picture.GetBitmapAsnyc()).Escala(0.5f));
-            bmp = DicImagenes[url];
+            if (!File.Exists(pathFile))
+            {
+                imgSerie = (await Picture.GetBitmap()).Escala(0.35f);
+                try
+                {
+                    imgSerie.Save(pathFile);
+                }
+                catch { }
+            }
+            else imgSerie = new Bitmap(pathFile);
 
-            return bmp;
-
+            return imgSerie;
         }
-        public void Refresh()
+        public void Reset()
         {
             //elimino la pagina
             total = -1;
-            CargarDatosSiEsNecesario();
+            if (DicSeriesCompleto.ContainsKey(Pagina.AbsoluteUri))
+                DicSeriesCompleto.Remove(Pagina.AbsoluteUri);
         }
         private void CargarDatosSiEsNecesario()
         {
@@ -436,32 +437,9 @@ namespace CheckFenix.Core
             {
                 File.Move(FavoriteFile, pathBack);
             }
-            File.WriteAllLines(FavoriteFile, DicFavoritos.Where(p => p.Value).Select(p => p.Key));
+            File.WriteAllLines(FavoriteFile, DicFavoritos.Select(p => p.Key));
         }
 
-        public static void SaveCache()
-        {
-            string path;
-
-            if (DicImagenes.Count > 0 && !Directory.Exists(CacheFolder))
-                Directory.CreateDirectory(CacheFolder);
-            else if (DicImagenes.Count == 0 && Directory.Exists(CacheFolder))
-                Directory.Delete(CacheFolder);
-
-            foreach (var item in DicImagenes)
-            {
-                try
-                {
-                    path = Path.Combine(CacheFolder, item.Key);
-                    if (!File.Exists(path))
-                        item.Value.Save(path);
-                }
-                catch
-                {
-                    System.Diagnostics.Debugger.Break();
-                }
-            }
-        }
 
     }
     public class CapituloNoEncontradoException : Exception

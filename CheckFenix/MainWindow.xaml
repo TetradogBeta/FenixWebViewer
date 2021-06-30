@@ -5,24 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CheckFenix"
         mc:Ignorable="d"
-        Height="450" Width="800" KeyDown="Window_KeyDown_Gen" Closing="Window_Closing" >
+        Height="450" Width="800" KeyDown="Window_KeyDown_Gen" >
     <TabControl x:Name="tbMain" SelectionChanged="tbMain_SelectionChanged">
-        <TabItem Header="Capitulos Nuevos">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <local:VisorCapitulos x:Name="visorCapitulosActuales" TotalPage="100"/>
-            </ScrollViewer>
+        <TabItem Header="Capitulos Nuevos" PreviewMouseWheel="visorSeries_MouseWheel" >
+            <local:VisorCapitulos x:Name="visorCapitulosActuales"  KeyDown="Window_KeyDown" PreviewMouseWheel="visorSeries_MouseWheel" />
         </TabItem>
-        <TabItem Header="En Emisión">
-            <local:VisorSeries x:Name="visorSeriesEnEmision" KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
+        <TabItem Header="En Emisión"   PreviewMouseWheel="visorSeries_MouseWheel" >
+            <local:VisorSeries x:Name="visorSeriesEnEmision" KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeries_MouseWheel" />
         </TabItem>
-        <TabItem x:Name="tbFinalizadas" >
-            <local:VisorSeries x:Name="visorSeriesFinalizadas"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
+        <TabItem x:Name="tbFinalizadas"   PreviewMouseWheel="visorSeries_MouseWheel"  >
+            <local:VisorSeries x:Name="visorSeriesFinalizadas"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeries_MouseWheel" />
         </TabItem>
-        <TabItem Header="Favoritas">
-            <local:VisorSeries x:Name="visorSeriesFavoritas" MostrarFavorito="False"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
+        <TabItem Header="Favoritas"   PreviewMouseWheel="visorSeries_MouseWheel" >
+            <local:VisorSeries x:Name="visorSeriesFavoritas" MostrarFavorito="False"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeries_MouseWheel" />
         </TabItem>
-        <TabItem Header="Próximamente">
-            <local:VisorSeries x:Name="visorSeriesParaSalir"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeriesEnEmision_MouseWheel" />
+        <TabItem Header="Próximamente"   PreviewMouseWheel="visorSeries_MouseWheel" >
+            <local:VisorSeries x:Name="visorSeriesParaSalir"  KeyDown="Window_KeyDown"  PreviewMouseWheel="visorSeries_MouseWheel" />
         </TabItem>
     </TabControl>
 </Window>

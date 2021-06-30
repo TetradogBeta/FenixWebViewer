@@ -20,7 +20,7 @@ namespace CheckFenix
     /// <summary>
     /// Lógica de interacción para SerieViewer.xaml
     /// </summary>
-    public partial class SerieViewer : UserControl
+    public partial class SerieViewer : UserControl,IRefresh
     {
         static ImageSource ImgOn = Resource.corazonOn.ToImageSource();
         static ImageSource ImgOff = Resource.corazonOff.ToImageSource();
@@ -46,7 +46,7 @@ namespace CheckFenix
         {
             if (CargarImagenFull)
             {
-                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, (await Serie.Picture.GetBitmapAsnyc()).ToImageSource());
+                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, (await Serie.Picture.GetBitmap()).ToImageSource());
             }
             else if (!DicImgs.ContainsKey(Serie.Picture.AbsoluteUri))
             {
@@ -58,6 +58,7 @@ namespace CheckFenix
             if (MostarFavorito)
                 btnFavorito.Visibility = Visibility.Visible;
             else btnFavorito.Visibility = Visibility.Hidden;
+
         }
 
         private void imgSerie_MouseButtonDown(object sender, MouseButtonEventArgs e)
@@ -70,6 +71,7 @@ namespace CheckFenix
         {
             //guardo el favorito
             Serie.IsFavorito = e;
+            Serie.SaveFavoritos();
         }
     }
 }

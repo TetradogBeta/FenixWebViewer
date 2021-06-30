@@ -32,7 +32,7 @@ namespace CheckFenix.Core
             string name = Path.GetFileName(Picture.AbsoluteUri);
             if (!DicPic.ContainsKey(name))
             {
-                DicPic.Add(name, await Picture.GetBitmapAsnyc());
+                DicPic.Add(name, await Picture.GetBitmap());
             }
             return DicPic[name];
 

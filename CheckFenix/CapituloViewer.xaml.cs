@@ -21,7 +21,7 @@ namespace CheckFenix
     /// <summary>
     /// Lógica de interacción para CapituloViewer.xaml
     /// </summary>
-    public partial class CapituloViewer : UserControl
+    public partial class CapituloViewer : UserControl,IRefresh
     {
         public CapituloViewer()
         {

@@ -10,10 +10,10 @@ namespace Gabriel.Cat.S.Extension
 {
     public static class UriExtension
     {
-        public static async Task<Bitmap> GetBitmapAsnyc(this Uri url)
+        public static async Task<Bitmap> GetBitmap(this Uri url)
         {
             System.Net.WebRequest request =System.Net.WebRequest.Create( url.AbsoluteUri);
-            System.Net.WebResponse response =await request.GetResponseAsync();
+            System.Net.WebResponse response = request.GetResponse();
             System.IO.Stream responseStream = response.GetResponseStream();
            return new Bitmap(responseStream);
         }

@@ -1,5 +1,6 @@
 ﻿using CheckFenix.Core;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,64 +17,26 @@ using System.Windows.Shapes;
 
 namespace CheckFenix
 {
+
     /// <summary>
     /// Lógica de interacción para VisorSeries.xaml
     /// </summary>
-    public partial class VisorSeries : UserControl
+    public partial class VisorSeries : UserControl,IVisor
     {
-        private int page;
 
         public VisorSeries()
         {
             InitializeComponent();
-            TotalPage = 12;
-            Page = 0;
-            TotalRows = 2;
+            visorSeries.Reader = (elements)=> (elements as IEnumerable<Serie>).Select(s => new SerieViewer(s) { MostarFavorito = MostrarFavorito }); 
             MostrarFavorito = true;
-            UltimaPaginaSinAcabar = -1;
+ 
         }
-
-        public IEnumerable<Serie> Series { get; set; }
-
-        public int TotalRows { get; set; }
-        public int TotalPage { get; set; }
-        public int Page { get => page; set { page = UltimaPaginaSinAcabar < 0?value: value <= UltimaPaginaSinAcabar?value:UltimaPaginaSinAcabar; } }
+        public Visor Visor => visorSeries;
+        public IEnumerable<Serie> Series { get => visorSeries.Elements as IEnumerable<Serie>; set => visorSeries.Elements = value; }
+  
         public bool MostrarFavorito { get; set; }
-        int UltimaPaginaSinAcabar { get; set; }
-        public async Task Refresh()
-        {
-            SerieViewer visorSerie;
-            IEnumerable<Serie> series;
-            List<Task> cargaSeries;
-            if (UltimaPaginaSinAcabar < 0 || Page <= UltimaPaginaSinAcabar)
-            {
-                cargaSeries = new List<Task>();
-                series = Series.Skip(Page * TotalPage).Take(TotalPage);
-                ugSeries.Rows = TotalRows;
-                ugSeries.Children.Clear();
-                foreach (Serie serie in series)
-                {
-                    visorSerie = new SerieViewer(serie) { MostarFavorito = MostrarFavorito };
-                    cargaSeries.Add(visorSerie.Refresh());
-                    ugSeries.Children.Add(visorSerie);
-                }
-                if (ugSeries.Children.Count == 0)
-                {
-                    UltimaPaginaSinAcabar = Page - 1;
-                    Page--;
-                    await Refresh();
-                }
-                else if (ugSeries.Children.Count < TotalPage)
-                    UltimaPaginaSinAcabar = Page;
-                if (ugSeries.Children.Count > 0)
-                {
-                    await Task.WhenAll(cargaSeries);
-                }
-                }
 
-        }
-
-
-
+      
     }
+
 }

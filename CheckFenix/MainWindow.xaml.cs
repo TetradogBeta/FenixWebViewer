@@ -3,6 +3,7 @@ using CheckFenix.CargarBD;
 using CheckFenix.Core;
 using Gabriel.Cat.S.Extension;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -34,7 +35,7 @@ namespace CheckFenix
         const int PROXIMANENTEPAGE = 4;
 
         const string CARGANDO = "Cargando";
-        const string TITULO = "AnimeFenix Desktop 1.5";
+        const string TITULO = "AnimeFenix Desktop 1.5b";
         const string FINALIZADAS = "Finalizadas";
 
         IEnumerable<Capitulo> capitulosAnt;
@@ -47,7 +48,7 @@ namespace CheckFenix
         public MainWindow()
         {
             NotificationTimeOut = TimeSpan.FromMinutes(3);
-            Manager = new Notifications.Wpf.Core.NotificationManager();
+            Manager = new Notifications.Wpf.Core.NotificationManager(Dispatcher);
             TimerAutoRefresh = new Timer(TimeSpan.FromMinutes(5).TotalMilliseconds);
             Title = TITULO;
             InitializeComponent();
@@ -70,7 +71,7 @@ namespace CheckFenix
                     Dispatcher.BeginInvoke(new Action(() =>
                     {
                         visorSeriesFinalizadas.Series = SeriesFinalizadas;
-                        visorSeriesFinalizadas.Refresh().ContinueWith(AcabaDeCargar()).Wait();
+                        visorSeriesFinalizadas.Visor.Refresh().ContinueWith(AcabaDeCargar()).Wait();
                         tbFinalizadas.Header = FINALIZADAS;
                         tbFinalizadas.IsEnabled = true;
                         TimerAutoRefresh.Start();
@@ -130,68 +131,43 @@ namespace CheckFenix
 
         private void tbMain_SelectionChanged(object sender = null, SelectionChangedEventArgs e = null)
         {
-
+            IVisor visor;
+            IEnumerable items = default;
             switch (tbMain.SelectedIndex)
             {
                 case CAPITULOSACTUALESPAGE:
                     if (Equals(capitulos, default))
                     {
-                        try
-                        {
-                            visorCapitulosActuales.Capitulos = CapitulosActuales;
-                            Title = CARGANDO;
-                            visorCapitulosActuales.Refresh().ContinueWith(AcabaDeCargar()).Wait();
-                        }
-                        catch
-                        {
-                            MostrarErrorSinInternet();
-                        }
+                        items = CapitulosActuales;
                     }
                     break;
                 case SERIESACTUALESPAGE:
                     if (Equals(enEmision, default))
                     {
-                        try
-                        {
-                            visorSeriesEnEmision.Series = SeriesEnEmision;
-                            Title = CARGANDO;
-                            visorSeriesEnEmision.Refresh().ContinueWith(AcabaDeCargar()).Wait();
-                        }
-                        catch
-                        {
-                            MostrarErrorSinInternet();
-                        }
+                        items = SeriesEnEmision;
                     }
 
                     break;
                 case FAVORITOSPAGE:
-                    try
-                    {
-                        visorSeriesFavoritas.Series = Favorites;
-                        Title = CARGANDO;
-                        visorSeriesFavoritas.Refresh().ContinueWith(AcabaDeCargar()).Wait();
-                    }
-                    catch
-                    {
-                        MostrarErrorSinInternet();
-                    }
+
+                    items = Favorites;
+
                     break;
                 case PROXIMANENTEPAGE:
 
                     if (Equals(proximasSeries, default))
                     {
-                        try
-                        {
-                            visorSeriesParaSalir.Series = ProximasSeries;
-                            Title = CARGANDO;
-                            visorSeriesParaSalir.Refresh().ContinueWith(AcabaDeCargar()).Wait();
-                        }
-                        catch
-                        {
-                            MostrarErrorSinInternet();
-                        }
+                        items = ProximasSeries;
+
                     }
                     break;
+            }
+            if (!Equals(items, default))
+            {
+                visor = (tbMain.SelectedItem as TabItem).Content as IVisor;
+                visor.Visor.Elements = items;
+                Title = CARGANDO;
+                visor.Visor.Refresh().ContinueWith(AcabaDeCargar()).Wait();
             }
 
         }
@@ -222,16 +198,23 @@ namespace CheckFenix
                     foreach (Capitulo capitulo in capitulosAnt)
                         dicCapitulos.Add(capitulo.Pagina.AbsoluteUri, capitulo);
                     foreach (Capitulo capitulo in CapitulosActuales)
-                        if (!dicCapitulos.ContainsKey(capitulo.Pagina.AbsoluteUri) && capitulo.Serie.IsFavorito)
+                    {
+                        if (!dicCapitulos.ContainsKey(capitulo.Pagina.AbsoluteUri))
                         {
-                            //notifico sobre el capitulo
-                            notification = new Notifications.Wpf.Core.NotificationContent();
-                            notification.Message = $"Ha Salido {capitulo.Name}";
-                            notification.Type = Notifications.Wpf.Core.NotificationType.Information;
-                            notification.Title = "Capitulo nuevo!";
+                            capitulo.Serie.Reset();//así no da problemas con la fecha del proximo capitulo y el total :)
+                            if (capitulo.Serie.IsFavorito)
+                            {
+                                //notifico sobre el capitulo
+                                notification = new Notifications.Wpf.Core.NotificationContent();
+                                notification.Message = $"Ha Salido {capitulo.Name}";
+                                notification.Type = Notifications.Wpf.Core.NotificationType.Information;
+                                notification.Title = "Capitulo nuevo!";
 
-                            await Manager.ShowAsync(notification, onClick: () => capitulo.AbrirLink(), expirationTime: NotificationTimeOut);
+                                await Manager.ShowAsync(notification, onClick: () => capitulo.AbrirLink(), expirationTime: NotificationTimeOut);
+                            }
                         }
+
+                    }
                 })).Start();
             }));
         }
@@ -249,7 +232,7 @@ namespace CheckFenix
         {
             Window_KeyDown((tbMain.SelectedItem as TabItem).Content, e);
         }
-        private void visorSeriesEnEmision_MouseWheel(object sender, MouseWheelEventArgs e)
+        private void visorSeries_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             MoverVisor((tbMain.SelectedItem as TabItem).Content, e.Delta > 0 ? Key.Up : Key.Down);
         }
@@ -281,39 +264,30 @@ namespace CheckFenix
 
         void MoverVisor(object sender, Key e)
         {
-            VisorSeries visor = sender as VisorSeries;
+
+            IVisor visor = sender as IVisor;
             if (!Equals(visor, default))
             {
                 if (e.Equals(Key.Up))
                 {
-                    if (visor.Page > 0)
+                    if (visor.Visor.Page > 0)
                     {
-                        visor.Page--;
+                        visor.Visor.Page--;
                         Title = CARGANDO;
-                        visor.Refresh().ContinueWith(AcabaDeCargar());
+                        visor.Visor.Refresh().ContinueWith(AcabaDeCargar()).Wait();
 
                     }
                 }
                 else if (e.Equals(Key.Down))
                 {
-                    visor.Page++;
+                    visor.Visor.Page++;
                     Title = CARGANDO;
-                    visor.Refresh().ContinueWith(AcabaDeCargar());
+                    visor.Visor.Refresh().ContinueWith(AcabaDeCargar()).Wait();
                 }
             }
-        }
-
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            Title = "Guardando Favoritos!";
-            Serie.SaveFavoritos();
-            Title = "Guardando Cache!";
-            Capitulo.SaveCache();
-            Serie.SaveCache();
-
-
 
         }
+
 
 
     }

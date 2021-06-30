@@ -15,25 +15,13 @@ namespace CheckFenix.Core
     {
         public static string CacheFolder = "CacheCapitulos";
 
-        static LlistaOrdenada<string, Bitmap> DicImagenes { get; set; }
-
         List<string> links;
         Uri paginaSerie;
         Serie serie;
         int numero;
         private Uri picture;
 
-        static Capitulo()
-        {
-            DicImagenes = new LlistaOrdenada<string, Bitmap>();
-            if (Directory.Exists(CacheFolder))
-            {
-                //cargo el cache!
-                foreach (string item in Directory.GetFiles(CacheFolder))
-                    DicImagenes.Add(Path.GetFileName(item), new Bitmap(item));
-            }
 
-        }
         public Capitulo() { numero = -1; }
         public Capitulo(Uri pagina):this()
         {
@@ -103,13 +91,30 @@ namespace CheckFenix.Core
         }
         public async Task<Bitmap> GetImage()
         {
+            Task<Bitmap> dwnImg;
+            Bitmap imgCapitulo;
+            string fileName = Path.GetFileName(Picture.AbsoluteUri);
+            string pathFile = Path.Combine(CacheFolder, fileName);
+            
+            if (!Directory.Exists(CacheFolder))
+                Directory.CreateDirectory(CacheFolder);
 
-            string url = Path.GetFileName(Picture.AbsoluteUri);
-            if (!DicImagenes.ContainsKey(url))
-                DicImagenes.Add(url, (await Picture.GetBitmapAsnyc()).Escala(0.35f));
-            return DicImagenes[url];
+            if (!File.Exists(pathFile))
+            {
+                dwnImg = Picture.GetBitmap();
+                imgCapitulo = (await dwnImg);
+                imgCapitulo=imgCapitulo.Escala(0.35f);
+                try
+                {
+                    imgCapitulo.Save(pathFile);
+                }
+                catch { }
+            }
+            else imgCapitulo = new Bitmap(pathFile);
 
+            return imgCapitulo;
         }
+
         public void Reload()
         {
             string url;
@@ -169,6 +174,10 @@ namespace CheckFenix.Core
             }
             return !string.IsNullOrEmpty(url);
         }
+        public override string ToString()
+        {
+            return Name;
+        }
 
         public static IEnumerable<Capitulo> GetCapitulosHome(string urlFenix)
         {
@@ -193,29 +202,7 @@ namespace CheckFenix.Core
             });
 
         }
-        public static void SaveCache()
-        {
-            string path;
 
-            if (DicImagenes.Count > 0 && !Directory.Exists(CacheFolder))
-                Directory.CreateDirectory(CacheFolder);
-            else if (DicImagenes.Count == 0 && Directory.Exists(CacheFolder))
-                Directory.Delete(CacheFolder);
-
-            foreach (var item in DicImagenes)
-            {
-                try
-                {
-                    path = Path.Combine(CacheFolder, item.Key);
-                    if (!File.Exists(path))
-                        item.Value.Save(path);
-                }
-                catch
-                {
-                    System.Diagnostics.Debugger.Break();
-                }
-            }
-        }
 
 
 
