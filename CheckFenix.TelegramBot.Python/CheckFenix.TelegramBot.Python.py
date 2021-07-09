@@ -35,7 +35,8 @@ else:
 print("CheckFenix V1.0 Telegram bot");
 #leo los capitulos ya publicados y los añado al diccionario
 capitulosPublicados={};
-
+channel="@"+channel;
+bot = telegram.Bot(apiKey);
 if exists(pathFile):
     fCapitulos = open(pathFile, "r");
     capitulosGuardados = fCapitulos.readlines();
@@ -54,6 +55,7 @@ while True:
                 fCapitulos.write(capitulo.Name+"\n");
                 fCapitulos.close();
                 #publico el capitulo
+                bot.send_photo(channel, capitulo.Picture,capitulo.Name+"\n"+capitulo.GetLinkMega());
         print("Descanso de 5 min");
         time.sleep(5*60);
     except:
