@@ -1,8 +1,10 @@
 from Capitulo import Capitulo
 from os.path import exists
+import numpy
 import time
 import sys
 import telegram
+
 
 
 pathConfig="config";
@@ -44,13 +46,14 @@ if exists(pathFile):
 
 while True:
     try:
-        for capitulo in Capitulo.GetCapitulos(uriWeb):#me falta invertirlo
+        for capitulo in numpy.flip(numpy.array(Capitulo.GetCapitulos(uriWeb))):
             if capitulo.Name not in capitulosPublicados:
                 print(capitulo.Name);
                 capitulosPublicados[capitulo.Name]=capitulo.Name;
                 fCapitulos = open(pathFile, 'a');
                 fCapitulos.write(capitulo.Name+"\n");
                 fCapitulos.close();
+                #publico el capitulo
         print("Descanso de 5 min");
         time.sleep(5*60);
     except:
