@@ -19,7 +19,7 @@ namespace CheckFenix.TelegramBot
         public static string File => Resource.File;
         public static string Web => Resource.Web;
         public static string Canal => Resource.Canal;
-        public static string ApiKeyBoy => Resource.ApiKeyBot;
+        public static string ApiKeyBot => Resource.ApiKeyBot;
 
         static void Main(string[] args)
         {
@@ -32,7 +32,7 @@ namespace CheckFenix.TelegramBot
             }
 
             Console.WriteLine("Iniciando Bot Telegram!");
-            BotClient = new TelegramBotClient(ApiKeyBoy);
+            BotClient = new TelegramBotClient(ApiKeyBot);
             temporizadorCheck.Change(0, TIEMPOCHECK);
             Console.WriteLine("Bot Esperando nuevos capitulos!");
             Console.WriteLine("Enter para cerrarlo");
