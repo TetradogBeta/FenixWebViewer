@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CheckFenix.Core", "CheckFen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CheckFenix.CargarBD", "CargarBD\CheckFenix.CargarBD.csproj", "{E1FB9B8E-BE90-4754-81E8-78A94C31CD6B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckFenix.TelegramBot", "CheckFenix.TelegramBot\CheckFenix.TelegramBot.csproj", "{767CC17E-4BB6-406B-B75A-E9F49BD049FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CheckFenix.TelegramBot", "CheckFenix.TelegramBot\CheckFenix.TelegramBot.csproj", "{767CC17E-4BB6-406B-B75A-E9F49BD049FD}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "CheckFenix.TelegramBot.Python", "CheckFenix.TelegramBot.Python\CheckFenix.TelegramBot.Python.pyproj", "{9BA070CF-653A-434D-B0BA-6C43A70E6B9C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,8 @@ Global
 		{767CC17E-4BB6-406B-B75A-E9F49BD049FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{767CC17E-4BB6-406B-B75A-E9F49BD049FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{767CC17E-4BB6-406B-B75A-E9F49BD049FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BA070CF-653A-434D-B0BA-6C43A70E6B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BA070CF-653A-434D-B0BA-6C43A70E6B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
