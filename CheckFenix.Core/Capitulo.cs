@@ -166,13 +166,25 @@ namespace CheckFenix.Core
             string url;
 
 
-            url =Links.FirstOrDefault();
+            url =GetLinkMega();
 
             if (!string.IsNullOrEmpty(url))
             {
                 new Uri(url).Abrir();
             }
+            else
+            {
+                url = Links.FirstOrDefault();
+                if (!string.IsNullOrEmpty(url))
+                {
+                    new Uri(url).Abrir();
+                }
+            }
             return !string.IsNullOrEmpty(url);
+        }
+        public string GetLinkMega()
+        {
+            return Links.Where(l => l.Contains("mega")).Select(l => l.Replace("embed", "file")).FirstOrDefault();
         }
         public override string ToString()
         {

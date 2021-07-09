@@ -53,7 +53,7 @@ namespace CheckFenix.TelegramBot
             {
                 if (!DicCapitulosPublished.ContainsKey(capitulo.Name))
                 {
-                    linkMega = capitulo.Links.Where(l => l.Contains("mega")).FirstOrDefault();
+                    linkMega = capitulo.GetLinkMega();
                     if (!Equals(linkMega, default))
                     {
                         BotClient.SendPhotoAsync(Canal, new Telegram.Bot.Types.InputFiles.InputOnlineFile(capitulo.Picture), $"{capitulo.Name} {linkMega}");

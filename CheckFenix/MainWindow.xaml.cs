@@ -35,7 +35,7 @@ namespace CheckFenix
         const int PROXIMANENTEPAGE = 4;
 
         const string CARGANDO = "Cargando";
-        const string TITULO = "AnimeFenix Desktop 1.5b";
+        const string TITULO = "AnimeFenix Desktop 1.5c";
         const string FINALIZADAS = "Finalizadas";
 
         IEnumerable<Capitulo> capitulosAnt;
