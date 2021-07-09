@@ -13,8 +13,6 @@ class Capitulo(object):
         self.Picture=htmlImg.get("src");
         self.Name=htmlA.get("title");
         self.Pagina=htmlA.get("href");
-        self.Link=self.GetLinkMega();
-
     def GetLinks(self):
         regex=re.compile("(<iframe[^>]*>(.*?)</iframe>)");
         page = requests.get(self.Pagina);
