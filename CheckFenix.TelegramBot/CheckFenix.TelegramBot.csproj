@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <ApplicationIcon>checkFenixBot.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Telegram.Bot" Version="16.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CheckFenix.Core\CheckFenix.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resource.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resource.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
