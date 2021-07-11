@@ -32,9 +32,9 @@ namespace CheckFenix
             Capitulo = capitulo;
         }
         public Capitulo Capitulo { get; set; }
-        public async Task Refresh()
+        public void Refresh()
         {
-            imgCapitulo.SetImage(await Capitulo.GetImage());
+            imgCapitulo.SetImage( Capitulo.GetImage());
             imgCapitulo.ToolTip = Capitulo.Name;
             
         }

@@ -89,9 +89,8 @@ namespace CheckFenix.Core
             }
             set => links = value;
         }
-        public async Task<Bitmap> GetImage()
+        public Bitmap GetImage()
         {
-            Task<Bitmap> dwnImg;
             Bitmap imgCapitulo;
             string fileName = Path.GetFileName(Picture.AbsoluteUri);
             string pathFile = Path.Combine(CacheFolder, fileName);
@@ -101,9 +100,9 @@ namespace CheckFenix.Core
 
             if (!File.Exists(pathFile))
             {
-                dwnImg = Picture.GetBitmap();
-                imgCapitulo = (await dwnImg);
-                imgCapitulo=imgCapitulo.Escala(0.35f);
+        
+                imgCapitulo = Picture.GetBitmap();
+                imgCapitulo =imgCapitulo.Escala(0.35f);
                 try
                 {
                     imgCapitulo.Save(pathFile);

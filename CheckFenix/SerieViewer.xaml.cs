@@ -42,15 +42,15 @@ namespace CheckFenix
         public bool AbrirSerieAlHacerClick { get; set; }
         public bool MostarFavorito { get; set; }
         public bool CargarImagenFull { get; set; }
-        public async Task Refresh()
+        public void Refresh()
         {
             if (CargarImagenFull)
             {
-                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, (await Serie.Picture.GetBitmap()).ToImageSource());
+                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri,  Serie.Picture.GetBitmap().ToImageSource());
             }
             else if (!DicImgs.ContainsKey(Serie.Picture.AbsoluteUri))
             {
-                DicImgs.Add(Serie.Picture.AbsoluteUri,(await Serie.GetImage()).ToImageSource());
+                DicImgs.Add(Serie.Picture.AbsoluteUri, Serie.GetImage().ToImageSource());
             }
             imgSerie.Source = DicImgs[Serie.Picture.AbsoluteUri];
             imgSerie.ToolTip = Serie.Name;

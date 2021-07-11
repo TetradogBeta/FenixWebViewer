@@ -25,14 +25,14 @@ namespace CheckFenix.Core
         public string Name { get; set; }
         public string Mensaje { get; set; }
 
-        public async Task<Bitmap> GetImage()
+        public Bitmap GetImage()
         {
 
 
             string name = Path.GetFileName(Picture.AbsoluteUri);
             if (!DicPic.ContainsKey(name))
             {
-                DicPic.Add(name, await Picture.GetBitmap());
+                DicPic.Add(name, Picture.GetBitmap());
             }
             return DicPic[name];
 

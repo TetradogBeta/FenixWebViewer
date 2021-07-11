@@ -209,7 +209,7 @@ namespace CheckFenix.Core
                 }
             }
         }
-        public async Task<Bitmap> GetImage()
+        public  Bitmap GetImage()
         {
             Bitmap imgSerie;
             string fileName = Path.GetFileName(Picture.AbsoluteUri);
@@ -220,7 +220,7 @@ namespace CheckFenix.Core
 
             if (!File.Exists(pathFile))
             {
-                imgSerie = (await Picture.GetBitmap()).Escala(0.35f);
+                imgSerie =  Picture.GetBitmap().Escala(0.35f);
                 try
                 {
                     imgSerie.Save(pathFile);

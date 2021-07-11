@@ -31,9 +31,9 @@ namespace CheckFenix
             Refresh();
         }
         public Comentario Comentario { get; set; }
-        public async Task Refresh()
+        public void Refresh()
         {
-            imgAvatar.SetImage(await Comentario.GetImage());
+            imgAvatar.SetImage(Comentario.GetImage());
             tbNombre.Text = Comentario.Name;
             tbComentario.Text = Comentario.Mensaje;
         }

@@ -42,10 +42,9 @@ namespace CheckFenix
         public async Task Refresh()
         {
             IEnumerable<UIElement> series;
-            List<Task> cargaSeries;
             if (UltimaPaginaSinAcabar < 0 || Page <= UltimaPaginaSinAcabar)
             {
-                cargaSeries = new List<Task>();
+    
                 series = Reader(Elements).Skip(Page * TotalPage).Take(TotalPage);
                 ugVisor.Rows = TotalRows;
                 ugVisor.Columns = TotalColumns;
@@ -53,7 +52,7 @@ namespace CheckFenix
                 foreach (UIElement serie in series)
                 {
 
-                    cargaSeries.Add((serie as IRefresh).Refresh());
+                    (serie as IRefresh).Refresh();
                     ugVisor.Children.Add(serie);
                 }
                 if (ugVisor.Children.Count == 0)
@@ -64,10 +63,7 @@ namespace CheckFenix
                 }
                 else if (ugVisor.Children.Count < TotalPage)
                     UltimaPaginaSinAcabar = Page;
-                if (ugVisor.Children.Count > 0)
-                {
-                    await Task.WhenAll(cargaSeries);
-                }
+             
             }
         }
 
@@ -82,6 +78,6 @@ namespace CheckFenix
 
     public interface IRefresh
     {
-        Task Refresh();
+        void Refresh();
     }
 }
