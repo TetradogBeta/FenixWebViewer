@@ -211,6 +211,8 @@ namespace CheckFenix.Core
         }
         public  Bitmap GetImage()
         {
+            Task<Bitmap> tBmp;
+
             Bitmap imgSerie;
             string fileName = Path.GetFileName(Picture.AbsoluteUri);
             string pathFile = Path.Combine(CacheFolder, fileName);
@@ -220,7 +222,9 @@ namespace CheckFenix.Core
 
             if (!File.Exists(pathFile))
             {
-                imgSerie =  Picture.GetBitmap().Escala(0.35f);
+                tBmp = Picture.GetBitmap();
+                tBmp.Wait();
+                imgSerie =  tBmp.Result.Escala(0.35f);
                 try
                 {
                     imgSerie.Save(pathFile);
@@ -249,6 +253,7 @@ namespace CheckFenix.Core
             HtmlNode nodoFecha;
             HtmlNode nodoTotal;
             Serie serie;
+            Task<HtmlDocument> tDoc;
 
             if (total < 0)
             {
@@ -256,8 +261,9 @@ namespace CheckFenix.Core
                 {
                     DicSeriesCompleto.Add(Pagina.AbsoluteUri, this);
                     DicSeriesBasico.AddOrReplace(Pagina.AbsoluteUri, this);
-
-                    pagina = new HtmlDocument().LoadUrl(Pagina);
+                    tDoc = new HtmlDocument().LoadUrl(Pagina);
+                    tDoc.Wait();
+                    pagina = tDoc.Result;
                     nodoNombre = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
                     nodoDesc = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
                     nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
@@ -319,7 +325,9 @@ namespace CheckFenix.Core
         }
         public bool UltimoEnParrilla()
         {
-            return new Uri(Pagina.Host).DownloadString().Contains(Ultimo.Pagina.AbsolutePath);
+            Task<string> tHtml = new Uri(Pagina.Host).DownloadString();
+            tHtml.Wait();
+            return tHtml.Result.Contains(Ultimo.Pagina.AbsolutePath);
         }
         public override string ToString()
         {
@@ -347,6 +355,7 @@ namespace CheckFenix.Core
 
             const string CLASE = "serie-card";
 
+            Task<HtmlDocument> tDoc;
             HtmlNode[] nodosSeries;
             HtmlNode nodoLink;
             string uri, name;
@@ -357,8 +366,9 @@ namespace CheckFenix.Core
             do
             {
                 //no se puede guardar porque la pagina 1 es la más nueva ergo los indices cambian
-                nodosSeries = new HtmlDocument().LoadUrl(new Uri(urlBase + paginaActual))
-                                                .GetByClass(CLASE).ToArray();
+                tDoc = new HtmlDocument().LoadUrl(new Uri(urlBase + paginaActual));
+                tDoc.Wait();
+                nodosSeries = tDoc.Result.GetByClass(CLASE).ToArray();
                 if (upToDown)
                 {
                     for (int i = 0; i < nodosSeries.Length; i++)

@@ -82,7 +82,7 @@ class Checker(object):
                 if "\n" in messageLog:
                     posts=messageLog.split('\n');
                     for postId in posts:
-                        if postId!='' and Checker.IsNumber(postId):
+                        if postId!='' and Checker.IsNumber(postId) and int(postId)>=0:
                             try:
                                 post=TelegramHelper.GetMessage(self.ChatChannel,postId);
                                 capitulo=post.split('\n')[0];
@@ -92,10 +92,16 @@ class Checker(object):
                                     if indexAnd!=-1:
                                         indexSemicolon=capitulo.index(";",indexAnd);
                                         capitulo=capitulo[:indexAnd]+capitulo[indexSemicolon+1:];
-
-                                self.DicCapitulos[capitulo]=postId;
+                                if capitulo.endswith(' '):
+                                    capitulo=capitulo[:-1];
+                                if capitulo not in self.DicCapitulos:
+                                    self.DicCapitulos[capitulo]=postId;
+                                else:
+                                    self.Bot.delete_message(self.Channel,postId);
+                                    print("Duplicated "+str(capitulo));
                             except:
                                 print("Error--"+postId);
+                    self.UpdateLog();
             else:
                 message=self.Bot.send_message(Checker.CheckLog,"Init "+str(self.Bot.username));
                 self.ChatLogId=message.message_id;
@@ -153,8 +159,12 @@ class Checker(object):
     def UpdateLog(self):
         strMessageLog="";
         for idPost in self.DicCapitulos.values():
-            strMessageLog+=str(idPost)+"\n";
-        self.Bot.edit_message_text(strMessageLog,Checker.CheckLog,self.ChatLogId);
+            if int(idPost)>=0:
+                strMessageLog+=str(idPost)+"\n";
+        try:        
+            self.Bot.edit_message_text(strMessageLog,Checker.CheckLog,self.ChatLogId);
+        except:
+            pass;
 
 
 

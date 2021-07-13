@@ -10,6 +10,8 @@ namespace CheckFenix.Core
     {
         public static bool? IsOk(this Uri url)
         {
+            Task<string> tDoc;
+            Task<HttpStatusCode> tStatus;
             string html;
             bool? isOk = default;
 
@@ -20,14 +22,18 @@ namespace CheckFenix.Core
                 //    break;
 
                 case "femax20.com":
-                    html = url.DownloadString();
+                    tDoc = url.DownloadString();
+                    tDoc.Wait();
+                    html = tDoc.Result;
                     isOk = !html.Contains("Sorry this video is unavailable");
                     break;
                 //case "ok.ru"://se necesita cargar el js
                 //    isOk = !html.Contains("The video is blocked");
                 //    break;
                 case "www.yourupload.com":
-                    isOk = url.GetStatusCode() == HttpStatusCode.OK;
+                    tStatus = url.GetStatusCode();
+                    tStatus.Wait();
+                    isOk = tStatus.Result == HttpStatusCode.OK;
                     break;
 
             }

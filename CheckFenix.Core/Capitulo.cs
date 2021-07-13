@@ -43,9 +43,12 @@ namespace CheckFenix.Core
         }
         public Uri Picture { 
             get {
+                Task<HtmlDocument> tHtmlDocument;
                 if (Equals(picture, default))
                 {
-                    picture = new Uri(new HtmlDocument().LoadUrl(Pagina).GetByClass("is-2by4").First().GetByTagName("img").First().Attributes["src"].Value);
+                    tHtmlDocument = new HtmlDocument().LoadUrl(Pagina);
+                    tHtmlDocument.Wait();
+                    picture = new Uri(tHtmlDocument.Result.GetByClass("is-2by4").First().GetByTagName("img").First().Attributes["src"].Value);
                 }
                 return picture; 
             } 
@@ -91,6 +94,7 @@ namespace CheckFenix.Core
         }
         public Bitmap GetImage()
         {
+            Task<Bitmap> tImg;
             Bitmap imgCapitulo;
             string fileName = Path.GetFileName(Picture.AbsoluteUri);
             string pathFile = Path.Combine(CacheFolder, fileName);
@@ -101,7 +105,9 @@ namespace CheckFenix.Core
             if (!File.Exists(pathFile))
             {
         
-                imgCapitulo = Picture.GetBitmap();
+                tImg= Picture.GetBitmap();
+                tImg.Wait();
+                imgCapitulo = tImg.Result; 
                 imgCapitulo =imgCapitulo.Escala(0.35f);
                 try
                 {
@@ -121,10 +127,12 @@ namespace CheckFenix.Core
             string htmlUri;
             Regex regex;
             Match match,matchUrl;
-
+            Task<string> tHtml;
             try
             {
-                html =Pagina.DownloadString();
+                tHtml= Pagina.DownloadString();
+                tHtml.Wait();
+                html = tHtml.Result;
                
             }
             catch
@@ -140,7 +148,9 @@ namespace CheckFenix.Core
                 url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value.Replace("&amp;","&");
                 try
                 {
-                    htmlUri = new Uri(url).DownloadString();
+                    tHtml= new Uri(url).DownloadString();
+                    tHtml.Wait();
+                    htmlUri = tHtml.Result;
                     matchUrl = regex.Match(htmlUri);
                     if (matchUrl.Success)
                     {
@@ -192,7 +202,9 @@ namespace CheckFenix.Core
 
         public static IEnumerable<Capitulo> GetCapitulosHome(string urlFenix)
         {
-            return GetCapitulosHome(new HtmlDocument().LoadUrl(urlFenix).DocumentNode);
+            Task<HtmlDocument> tDoc = new HtmlDocument().LoadUrl(urlFenix);
+            tDoc.Wait();
+            return GetCapitulosHome(tDoc.Result.DocumentNode);
         }
 
         public static IEnumerable<Capitulo> GetCapitulosHome(HtmlNode nodePagina)

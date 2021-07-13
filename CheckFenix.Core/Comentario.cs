@@ -28,11 +28,13 @@ namespace CheckFenix.Core
         public Bitmap GetImage()
         {
 
-
+            Task<Bitmap> tBmp;
             string name = Path.GetFileName(Picture.AbsoluteUri);
             if (!DicPic.ContainsKey(name))
             {
-                DicPic.Add(name, Picture.GetBitmap());
+                tBmp = Picture.GetBitmap();
+                tBmp.Wait();
+                DicPic.Add(name, tBmp.Result);
             }
             return DicPic[name];
 

@@ -9,7 +9,7 @@ using Gabriel.Cat.S.Check;
 
 namespace CheckFenix.TelegramBot
 {
-    public class CapituloFenix : IFileMega
+    public class CapituloFenix : IFile
     {
         public CapituloFenix(Capitulo capitulo) => Capitulo = capitulo;
         public Capitulo Capitulo { get; set; }
@@ -17,10 +17,10 @@ namespace CheckFenix.TelegramBot
 
         public Uri Picture => Capitulo.Picture;
 
-        public string[] GetLinksMega()
+        public IEnumerable<Link> GetLinks()
         {
             string linkMega = Capitulo.GetLinkMega();
-            return Equals(linkMega, default) ? new string[0] : new string[] { linkMega };
+            return Equals(linkMega, default) ? default : new Link[] { linkMega };
         }
 
     }
@@ -32,11 +32,16 @@ namespace CheckFenix.TelegramBot
 
         static void Main(string[] args)
         {
+            Init(args).Wait();
+        }
+        static async Task Init(string[] args)
+        {
             Check checkFenix = new Check("Config");
-            checkFenix.Load(args);
-            checkFenix.Publicar(() => Capitulo.GetCapitulosHome(checkFenix.Web.AbsoluteUri).Reverse().Select(c => new CapituloFenix(c)),TIEMPOCHECK);
+            await checkFenix.Load(args);
+            await checkFenix.Publicar(async (webUrl) => Capitulo.GetCapitulosHome(webUrl.AbsoluteUri).Reverse().Select(c => new CapituloFenix(c)), TIEMPOCHECK);
 
         }
+
 
     }
 }
