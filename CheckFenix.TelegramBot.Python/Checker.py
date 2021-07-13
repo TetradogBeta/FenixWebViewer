@@ -4,10 +4,11 @@ import os
 import numpy
 import time
 import telegram
+import TelegramHelper
 
 
 class Checker(object):
-    CheckLog="@CheckLog";
+    CheckLog="@CheckingLog";
 
     def __init__(self,configFileName="config"):
         self.ConfigFileName=configFileName;
@@ -74,24 +75,36 @@ class Checker(object):
     async def InitUpdate(self):
         if self.Bot is None:
             self.Bot=telegram.Bot(self.ApiBotKey);
+            self.DicCapitulos={};
+            if self.ChatLogId>=0:
+                messageLog=self.GetMessageLog();
+                self.ChatChannel=self.Bot.getChat(self.Channel);
+                if "\n" in messageLog:
+                    posts=messageLog.split('\n');
+                    for postId in posts:
+                        if postId!='' and Checker.IsNumber(postId):
+                            try:
+                                post=TelegramHelper.GetMessage(self.ChatChannel,postId);
+                                capitulo=post.split('\n')[0];
+                                #elimino los &fff;
+                                while "&" in capitulo:
+                                    indexAnd=capitulo.index("&");
+                                    if indexAnd!=-1:
+                                        indexSemicolon=capitulo.index(";",indexAnd);
+                                        capitulo=capitulo[:indexAnd]+capitulo[indexSemicolon+1:];
 
-        self.DicCapitulos={};
-        if self.ChatLogId>=0:
-            self.ChatLog=self.Bot.getChat(Checker.CheckLog);#-1001318966076
-            messageLog=self.Bot.forward_message(self.ChatLog.id,self.Bot.id,self.ChatLogId);
-            self.ChatChannel=self.Bot.getChat(self.Channel);
-            for postId in messageLog.split('\n'):
-                if Checker.isNumber(postId):
-                    post=self.Bot.forward_message(self.ChatChannel.id,self.Bot.id,int(postId));
-                    capitulo=post.split('\n')[0];
-                    self.DicCapitulos[capitulo]=postId;
-        else:
-            message=self.Bot.send_message(Checker.CheckLog,"Init "+str(self.Channel)+"\n");
-            self.ChatLogId=message.message_id;
-            self.ChatLogIdLoaded=True;
-            self.UpdateConfig();
+                                self.DicCapitulos[capitulo]=postId;
+                            except:
+                                print("Error--"+postId);
+            else:
+                message=self.Bot.send_message(Checker.CheckLog,"Init "+str(self.Bot.username));
+                self.ChatLogId=message.message_id;
+                self.ChatLogIdLoaded=True;
+                self.UpdateConfig();
                 
-
+    def GetMessageLog(self):
+        self.ChatLog=self.Bot.getChat(Checker.CheckLog);
+        return TelegramHelper.GetMessage(self.ChatLog,self.ChatLogId);
     async def Update(self):
         init=True;
         hasAnError=False;
@@ -121,10 +134,13 @@ class Checker(object):
     async def OneLoopUpdate(self):
         await self.InitUpdate();
         try:
-            for capitulo in numpy.array(Capitulo.GetCapitulos(self.Web)):
-                if capitulo.Name not in self.DicCapitulos:
+            for capitulo in Capitulo.GetCapitulos(self.Web):
+                nombreCapitulo=capitulo.Name;
+                if "!" in nombreCapitulo:
+                    nombreCapitulo=nombreCapitulo.replace("!","");
+                if nombreCapitulo not in self.DicCapitulos:
                     print(capitulo.Name);
-                    self.DicCapitulos[capitulo.Name]=self.Bot.send_photo(self.ChatChannel.id, capitulo.Picture,capitulo.Name+"\n"+capitulo.GetLinkMega()).message_id;
+                    self.DicCapitulos[nombreCapitulo]=self.Bot.send_photo(self.ChatChannel.id, capitulo.Picture,capitulo.Name+"\n"+capitulo.GetLinkMega()).message_id;
                     self.UpdateLog();
                     
             hasAnError=False;
@@ -140,27 +156,27 @@ class Checker(object):
 
 
 
-@staticmethod #https://www.geeksforgeeks.org/implement-isnumber-function-in-python/
-# Implementation of isNumber() function
-def isNumber(s):
-     
-    # handle for negative values
-    isNum=s!=None and s!="";
-    if isNum:
-        negative = False
-        if(s[0] =='-'):
-            negative = True;
-            
-        if negative == True:
-            s = s[1:];
+    @staticmethod #https://www.geeksforgeeks.org/implement-isnumber-function-in-python/
+    # Implementation of isNumber() function
+    def IsNumber(s):
         
-        # try to convert the string to int
-        try:
-            dummy = int(s)
-            isNum= True;
-        # catch exception if cannot be converted
-        except ValueError:
-            isNum= False;
-    return isNum;
+        # handle for negative values
+        isNum=s!=None and s!="";
+        if isNum:
+            negative = False
+            if(s[0] =='-'):
+                negative = True;
+                
+            if negative == True:
+                s = s[1:];
+            
+            # try to convert the string to int
+            try:
+                dummy = int(s)
+                isNum= True;
+            # catch exception if cannot be converted
+            except ValueError:
+                isNum= False;
+        return isNum;
         
 
