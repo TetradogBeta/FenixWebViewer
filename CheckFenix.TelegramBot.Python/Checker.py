@@ -26,6 +26,7 @@ class Checker(object):
             self.ApiBotKey=args[2];
             if len(args)>3:
                 self.TotalLoop=args[3];
+                self.TotalLoopLoaded=True;
             if len(args)>4:
                 self.ChatLogId=args[4];
                 self.ChatLogIdLoaded=True;
