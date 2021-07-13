@@ -17,6 +17,7 @@ class Checker(object):
         self.Bot=None;
         self.ChatLogId=-1;
         self.ChatLogIdLoaded=False;
+        self.DicCapitulos={};
 
     def Load(self,args):
         if len(args)>=4:
@@ -75,10 +76,9 @@ class Checker(object):
     async def InitUpdate(self):
         if self.Bot is None:
             self.Bot=telegram.Bot(self.ApiBotKey);
-            self.DicCapitulos={};
+            self.ChatChannel=self.Bot.getChat(self.Channel);
             if self.ChatLogId>=0:
                 messageLog=self.GetMessageLog();
-                self.ChatChannel=self.Bot.getChat(self.Channel);
                 if "\n" in messageLog:
                     posts=messageLog.split('\n');
                     for postId in posts:
@@ -105,6 +105,7 @@ class Checker(object):
     def GetMessageLog(self):
         self.ChatLog=self.Bot.getChat(Checker.CheckLog);
         return TelegramHelper.GetMessage(self.ChatLog,self.ChatLogId);
+
     async def Update(self):
         init=True;
         hasAnError=False;
@@ -122,7 +123,7 @@ class Checker(object):
 
     def _WaitAnError(self,hasAnError):
         if hasAnError:
-            print("Sin conexión, vuelvo a intentarlo en 10 segundos");
+            print("Ha habido un problema, vuelvo a intentarlo en 10 segundos");
             time.sleep(10);
         return hasAnError;
     def _WaitDescanso(self,init,hasAnError):
@@ -138,6 +139,7 @@ class Checker(object):
                 nombreCapitulo=capitulo.Name;
                 if "!" in nombreCapitulo:
                     nombreCapitulo=nombreCapitulo.replace("!","");
+
                 if nombreCapitulo not in self.DicCapitulos:
                     print(capitulo.Name);
                     self.DicCapitulos[nombreCapitulo]=self.Bot.send_photo(self.ChatChannel.id, capitulo.Picture,capitulo.Name+"\n"+capitulo.GetLinkMega()).message_id;
@@ -147,6 +149,7 @@ class Checker(object):
         except:
             hasAnError=True;
         return hasAnError;
+        
     def UpdateLog(self):
         strMessageLog="";
         for idPost in self.DicCapitulos.values():
