@@ -1,0 +1,166 @@
+from os.path import exists
+from Capitulo import Capitulo
+import os
+import numpy
+import time
+import telegram
+
+
+class Checker(object):
+    CheckLog="@CheckLog";
+
+    def __init__(self,configFileName="config"):
+        self.ConfigFileName=configFileName;
+        self.TotalLoop =-1;
+        self.TotalLoopLoaded=False;
+        self.Bot=None;
+        self.ChatLogId=-1;
+        self.ChatLogIdLoaded=False;
+
+    def Load(self,args):
+        if len(args)>=4:
+            self.Web=args[0];
+            self.Channel=args[1];
+            self.ApiBotKey=args[2];
+            if len(args)>3:
+                self.TotalLoop=args[3];
+            if len(args)>4:
+                self.ChatLogId=args[4];
+                self.ChatLogIdLoaded=True;
+
+        elif exists(self.ConfigFileName):
+            fConfig = open(self.ConfigFileName, "r");
+            config = fConfig.readlines();
+            fConfig.close();
+            self.Web=config[0].replace("\n","");
+            self.Channel=config[1].replace("\n","");
+            self.ApiBotKey=config[2].replace("\n","");
+            if len(config)>4:
+                self.TotalLoop=config[3].replace("\n","");
+                self.TotalLoopLoaded=True;
+            if len(config)>=5:
+                self.ChatLogId=config[4].replace("\n","");
+                self.ChatLogIdLoaded=True;
+
+        else:
+            raise Exception("Se necesita informacion para iniciar el BOT!");
+
+        if len(args)>1:
+            self.TotalLoop=args[0];
+
+        self.UpdateConfig();
+
+        if not isinstance(self.TotalLoop, int):
+            self.TotalLoop=int(self.TotalLoop);
+        if not isinstance(self.ChatLogId, int):
+            self.ChatLogId=int(self.ChatLogId);
+        if not self.Channel.startswith("@"):
+            self.Channel="@"+str(self.Channel);
+
+    def UpdateConfig(self):
+        if exists(self.ConfigFileName): 
+            os.remove(self.ConfigFileName);
+        config=[self.Web+"\n",self.Channel+"\n",self.ApiBotKey+"\n"];
+        fConfig = open(self.ConfigFileName, 'w');
+        if(self.TotalLoopLoaded):
+            config.append(str(self.TotalLoop)+"\n");
+        else:
+            config.append("-1\n");    
+        if(self.ChatLogIdLoaded):
+            config.append(str(self.ChatLogId)+"\n");
+        fConfig.writelines(config);
+        fConfig.close();
+
+    async def InitUpdate(self):
+        if self.Bot is None:
+            self.Bot=telegram.Bot(self.ApiBotKey);
+
+        self.DicCapitulos={};
+        if self.ChatLogId>=0:
+            self.ChatLog=self.Bot.getChat(Checker.CheckLog);#-1001318966076
+            messageLog=self.Bot.forward_message(self.ChatLog.id,self.Bot.id,self.ChatLogId);
+            self.ChatChannel=self.Bot.getChat(self.Channel);
+            for postId in messageLog.split('\n'):
+                if Checker.isNumber(postId):
+                    post=self.Bot.forward_message(self.ChatChannel.id,self.Bot.id,int(postId));
+                    capitulo=post.split('\n')[0];
+                    self.DicCapitulos[capitulo]=postId;
+        else:
+            message=self.Bot.send_message(Checker.CheckLog,"Init "+str(self.Channel)+"\n");
+            self.ChatLogId=message.message_id;
+            self.ChatLogIdLoaded=True;
+            self.UpdateConfig();
+                
+
+    async def Update(self):
+        init=True;
+        hasAnError=False;
+        
+        if self.TotalLoop>=0:
+            for i in range(0,self.TotalLoop):
+                    self._WaitDescanso(init,hasAnError);
+                    hasAnError=self._WaitAnError(await self.OneLoopUpdate());   
+                    init=False;
+        else:
+            while True:
+                self._WaitDescanso(init,hasAnError);
+                hasAnError=self._WaitAnError(await self.OneLoopUpdate());  
+                init=False;
+
+    def _WaitAnError(self,hasAnError):
+        if hasAnError:
+            print("Sin conexión, vuelvo a intentarlo en 10 segundos");
+            time.sleep(10);
+        return hasAnError;
+    def _WaitDescanso(self,init,hasAnError):
+        if not init and not hasAnError:
+            print("Descanso de 5 min");
+            time.sleep(5*60);
+
+    
+    async def OneLoopUpdate(self):
+        await self.InitUpdate();
+        try:
+            for capitulo in numpy.array(Capitulo.GetCapitulos(self.Web)):
+                if capitulo.Name not in self.DicCapitulos:
+                    print(capitulo.Name);
+                    self.DicCapitulos[capitulo.Name]=self.Bot.send_photo(self.ChatChannel.id, capitulo.Picture,capitulo.Name+"\n"+capitulo.GetLinkMega()).message_id;
+                    self.UpdateLog();
+                    
+            hasAnError=False;
+        except:
+            hasAnError=True;
+        return hasAnError;
+    def UpdateLog(self):
+        strMessageLog="";
+        for idPost in self.DicCapitulos.values():
+            strMessageLog+=str(idPost)+"\n";
+        self.Bot.edit_message_text(strMessageLog,Checker.CheckLog,self.ChatLogId);
+
+
+
+
+@staticmethod #https://www.geeksforgeeks.org/implement-isnumber-function-in-python/
+# Implementation of isNumber() function
+def isNumber(s):
+     
+    # handle for negative values
+    isNum=s!=None and s!="";
+    if isNum:
+        negative = False
+        if(s[0] =='-'):
+            negative = True;
+            
+        if negative == True:
+            s = s[1:];
+        
+        # try to convert the string to int
+        try:
+            dummy = int(s)
+            isNum= True;
+        # catch exception if cannot be converted
+        except ValueError:
+            isNum= False;
+    return isNum;
+        
+
