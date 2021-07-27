@@ -21,13 +21,14 @@ class Checker(object):
 
     def Load(self,args):
         if len(args)>=4:
-            self.Web=args[0];
-            self.Channel=args[1];
-            self.ApiBotKey=args[2];
-            if len(args)>3:
-                self.TotalLoop=args[3];
+            self.Web=args[1];
+            self.Channel=args[2];
+            self.ApiBotKey=args[3];
             if len(args)>4:
-                self.ChatLogId=args[4];
+                self.TotalLoop=args[4];
+                self.TotalLoopLoaded=True;
+            if len(args)>5:
+                self.ChatLogId=args[5];
                 self.ChatLogIdLoaded=True;
 
         elif exists(self.ConfigFileName):
