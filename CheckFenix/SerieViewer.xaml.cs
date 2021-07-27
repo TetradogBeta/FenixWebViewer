@@ -3,6 +3,7 @@ using Gabriel.Cat.S.Extension;
 using Gabriel.Cat.S.Utilitats;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -44,9 +45,12 @@ namespace CheckFenix
         public bool CargarImagenFull { get; set; }
         public void Refresh()
         {
+            Bitmap getBmp;
             if (CargarImagenFull)
             {
-                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri,  Serie.Picture.GetBitmap().ToImageSource());
+                getBmp = Serie.Picture.GetBitmapBypassed();
+
+                DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, getBmp.ToImageSource());
             }
             else if (!DicImgs.ContainsKey(Serie.Picture.AbsoluteUri))
             {

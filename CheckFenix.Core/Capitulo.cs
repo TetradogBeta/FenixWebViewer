@@ -23,7 +23,7 @@ namespace CheckFenix.Core
 
 
         public Capitulo() { numero = -1; }
-        public Capitulo(Uri pagina):this()
+        public Capitulo(Uri pagina) : this()
         {
             Pagina = pagina;
         }
@@ -41,17 +41,18 @@ namespace CheckFenix.Core
                 return numero;
             }
         }
-        public Uri Picture { 
-            get {
-                Task<HtmlDocument> tHtmlDocument;
+        public Uri Picture
+        {
+            get
+            {
+                HtmlDocument htmlDocument;
                 if (Equals(picture, default))
                 {
-                    tHtmlDocument = new HtmlDocument().LoadUrl(Pagina);
-                    tHtmlDocument.Wait();
-                    picture = new Uri(tHtmlDocument.Result.GetByClass("is-2by4").First().GetByTagName("img").First().Attributes["src"].Value);
+                    htmlDocument = new HtmlDocument().LoadUrlByPassed(Pagina);
+                    picture = new Uri(htmlDocument.GetByClass("is-2by4").First().GetByTagName("img").First().Attributes["src"].Value);
                 }
-                return picture; 
-            } 
+                return picture;
+            }
             set => picture = value;
         }
 
@@ -94,21 +95,18 @@ namespace CheckFenix.Core
         }
         public Bitmap GetImage()
         {
-            Task<Bitmap> tImg;
             Bitmap imgCapitulo;
             string fileName = Path.GetFileName(Picture.AbsoluteUri);
             string pathFile = Path.Combine(CacheFolder, fileName);
-            
+
             if (!Directory.Exists(CacheFolder))
                 Directory.CreateDirectory(CacheFolder);
 
             if (!File.Exists(pathFile))
             {
-        
-                tImg= Picture.GetBitmap();
-                tImg.Wait();
-                imgCapitulo = tImg.Result; 
-                imgCapitulo =imgCapitulo.Escala(0.35f);
+
+                imgCapitulo = Picture.GetBitmapBypassed();
+                imgCapitulo = imgCapitulo.Escala(0.35f);
                 try
                 {
                     imgCapitulo.Save(pathFile);
@@ -124,16 +122,13 @@ namespace CheckFenix.Core
         {
             string url;
             string html;
-            string htmlUri;
             Regex regex;
-            Match match,matchUrl;
-            Task<string> tHtml;
+            Match match, matchUrl;
             try
             {
-                tHtml= Pagina.DownloadString();
-                tHtml.Wait();
-                html = tHtml.Result;
-               
+                html = Pagina.DownloadBypassed();
+
+
             }
             catch
             {
@@ -145,17 +140,15 @@ namespace CheckFenix.Core
 
             while (match.Success)
             {
-                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value.Replace("&amp;","&");
+                url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value.Replace("&amp;", "&");
                 try
                 {
-                    tHtml= new Uri(url).DownloadString();
-                    tHtml.Wait();
-                    htmlUri = tHtml.Result;
-                    matchUrl = regex.Match(htmlUri);
+                    html = new Uri(url).DownloadBypassed();
+                    matchUrl = regex.Match(html);
                     if (matchUrl.Success)
                     {
                         url = HtmlNode.CreateNode("<iframe " + matchUrl.Value).Attributes["src"].Value.Replace("&amp;", "&");
-                        
+
                         links.Add(url);
                     }
                 }
@@ -163,7 +156,7 @@ namespace CheckFenix.Core
                 {
 
                 }
-               
+
                 match = match.NextMatch();
 
 
@@ -175,7 +168,7 @@ namespace CheckFenix.Core
             string url;
 
 
-            url =GetLinkMega();
+            url = GetLinkMega();
 
             if (!string.IsNullOrEmpty(url))
             {
@@ -202,9 +195,9 @@ namespace CheckFenix.Core
 
         public static IEnumerable<Capitulo> GetCapitulosHome(string urlFenix)
         {
-            Task<HtmlDocument> tDoc = new HtmlDocument().LoadUrl(urlFenix);
-            tDoc.Wait();
-            return GetCapitulosHome(tDoc.Result.DocumentNode);
+            HtmlDocument tDoc = new HtmlDocument().LoadUrlByPassed(urlFenix);
+
+            return GetCapitulosHome(tDoc.DocumentNode);
         }
 
         public static IEnumerable<Capitulo> GetCapitulosHome(HtmlNode nodePagina)

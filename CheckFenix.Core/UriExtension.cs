@@ -6,6 +6,7 @@ using Gabriel.Cat.S.Extension;
 
 namespace CheckFenix.Core
 {
+ 
     public static class UriExtension
     {
         public static bool? IsOk(this Uri url)
@@ -30,11 +31,11 @@ namespace CheckFenix.Core
                 //case "ok.ru"://se necesita cargar el js
                 //    isOk = !html.Contains("The video is blocked");
                 //    break;
-                case "www.yourupload.com":
-                    tStatus = url.GetStatusCode();
-                    tStatus.Wait();
-                    isOk = tStatus.Result == HttpStatusCode.OK;
-                    break;
+                //case "www.yourupload.com":
+                //    tStatus = url.GetStatusCode();
+                //    tStatus.Wait();
+                //    isOk = tStatus.Result == HttpStatusCode.OK;
+                //    break;
 
             }
 

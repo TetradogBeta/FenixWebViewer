@@ -7,7 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Gabriel.Cat.S.Check" Version="1.0.9" />
+    <PackageReference Include="Gabriel.Cat.S.Check" Version="1.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CheckFenix.Core\CheckFenix.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -10,6 +10,7 @@ namespace CargarBD
     public class Program
     {
         const string URL = "https://www.animefenix.com/";
+        static Random r = new Random();
         public static void Main(params string[] args)
         {
             int lastIndex=-1;
@@ -23,9 +24,10 @@ namespace CargarBD
             if (Equals(last, default) || last.LastPage>1)
             {
                 lastIndex = Equals(last, default) ? Serie.GetSeriesFinalizadasLastIndex(url):last.LastPage;
+                Wait();
                 for (int i = lastIndex; i >0 ; i--)
                 {
-                    
+                    Wait();
                     foreach (Serie serie in Serie.GetSeriesFinalizadas(url, i, false, 1))
                     {
                       if(Equals(context.Series.Find(serie.Pagina.AbsoluteUri),default))
@@ -42,6 +44,7 @@ namespace CargarBD
             {
                 for (int i =1; !encontrado; i++)
                 {
+                    Wait();
                     if (!Equals(context.Series.Find(Serie.GetSeriesFinalizadas(url, i).First().Pagina.AbsoluteUri), default))
                     {
                         encontrado = true;
@@ -52,8 +55,9 @@ namespace CargarBD
                 {
                  
                         for (int i = last.LastPage == 0 ? 1 : last.LastPage; i <= lastIndex; i++)
-                        {
-                            Serie.GetSeriesFinalizadas(url, i, true, 1).WhileEach((serie) =>
+                    {
+                        Wait();
+                        Serie.GetSeriesFinalizadas(url, i, true, 1).WhileEach((serie) =>
                         {
                             encontrado = !Equals(context.Series.Find(serie.Pagina.AbsoluteUri), default);
                             if (!encontrado)
@@ -69,6 +73,11 @@ namespace CargarBD
                 }
             }
 
+        }
+
+        private static void Wait()
+        {
+            System.Threading.Thread.Sleep(r.Next(3 * 1000, 5 * 1000));
         }
     }
 }

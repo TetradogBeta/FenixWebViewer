@@ -26,7 +26,7 @@ namespace CheckFenix.TelegramBot
     }
     class Program
     {
-        public const string VERSION = "1.3";
+        public const string VERSION = "1.4";
         public const int TIEMPOCHECK = 5 * 60 * 1000;
 
 
