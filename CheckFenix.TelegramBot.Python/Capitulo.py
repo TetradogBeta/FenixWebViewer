@@ -15,15 +15,15 @@ class Capitulo(object):
         self.Pagina=htmlA.get("href");
     def GetLinks(self):
         regex=re.compile("(<iframe[^>]*>(.*?)</iframe>)");
-        scraper = cloudscraper.create_scraper()
+        scraper = cloudscraper.create_scraper();
         page = scraper.get(self.Pagina).text;
-        htmlPage=str(page.content);
+        htmlPage=str(page);
         for iframeHtml in regex.findall(htmlPage):
             soup = BeautifulSoup(iframeHtml[0], "html.parser");
             iframe=soup.find("iframe");
             url= iframe.get("src").replace("&amp;","&").replace("\\'","");
-            page=requests.get(url);
-            soup=BeautifulSoup(regex.search(str(page.content)).group(), "html.parser");
+            page = scraper.get(url).text;
+            soup=BeautifulSoup(regex.search(str(page)).group(), "html.parser");
             iframe=soup.find("iframe");
             yield iframe.get("src").replace("&amp;","&");
 
@@ -39,9 +39,9 @@ class Capitulo(object):
         return linkMega;
     @staticmethod
     def GetNodosCapitulos(uriWeb):
-        scraper = cloudscraper.create_scraper()
+        scraper = cloudscraper.create_scraper();
         page = scraper.get(uriWeb).text;
-        soup = BeautifulSoup(page.content, "html.parser");
+        soup = BeautifulSoup(page, "html.parser");
         gridCapitulos=soup.find("div","capitulos-grid").children;
     
         for item in gridCapitulos:
