@@ -10,7 +10,7 @@ async def Main():
 if __name__ == '__main__':
     mainLoop = asyncio.get_event_loop();
     try:
-        print("CheckFenix V2.0 Telegram bot");
+        print("CheckFenix V2.1 Telegram bot");
         task_object_loop = mainLoop.create_task(Main());
         mainLoop.run_until_complete(task_object_loop);
     finally:

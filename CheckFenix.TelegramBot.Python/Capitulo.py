@@ -1,6 +1,6 @@
 from sys import dont_write_bytecode
 from bs4 import BeautifulSoup
-import requests
+import cloudscraper
 import re
 
 
@@ -15,7 +15,8 @@ class Capitulo(object):
         self.Pagina=htmlA.get("href");
     def GetLinks(self):
         regex=re.compile("(<iframe[^>]*>(.*?)</iframe>)");
-        page = requests.get(self.Pagina);
+        scraper = cloudscraper.create_scraper()
+        page = scraper.get(self.Pagina).text;
         htmlPage=str(page.content);
         for iframeHtml in regex.findall(htmlPage):
             soup = BeautifulSoup(iframeHtml[0], "html.parser");
@@ -38,7 +39,8 @@ class Capitulo(object):
         return linkMega;
     @staticmethod
     def GetNodosCapitulos(uriWeb):
-        page = requests.get(uriWeb);
+        scraper = cloudscraper.create_scraper()
+        page = scraper.get(uriWeb).text;
         soup = BeautifulSoup(page.content, "html.parser");
         gridCapitulos=soup.find("div","capitulos-grid").children;
     
