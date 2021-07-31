@@ -104,6 +104,7 @@ namespace CheckFenix
             }
         }
 
+
         private void btnPrecuela_Click(object sender, RoutedEventArgs e)
         {
             new winSerie(Serie.Precuela).Show();

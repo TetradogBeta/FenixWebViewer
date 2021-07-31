@@ -48,7 +48,7 @@ namespace CheckFenix.Core
                 HtmlDocument htmlDocument;
                 if (Equals(picture, default))
                 {
-                    htmlDocument = new HtmlDocument().LoadUrlByPassed(Pagina);
+                    htmlDocument = new HtmlDocument().LoadUrlCloudflare(Pagina);
                     picture = new Uri(htmlDocument.GetByClass("is-2by4").First().GetByTagName("img").First().Attributes["src"].Value);
                 }
                 return picture;
@@ -105,7 +105,7 @@ namespace CheckFenix.Core
             if (!File.Exists(pathFile))
             {
 
-                imgCapitulo = Picture.GetBitmapBypassed();
+                imgCapitulo = Picture.GetBitmapCloudflare();
                 imgCapitulo = imgCapitulo.Escala(0.35f);
                 try
                 {
@@ -126,7 +126,7 @@ namespace CheckFenix.Core
             Match match, matchUrl;
             try
             {
-                html = Pagina.DownloadBypassed();
+                html = Pagina.DownloadCloudflare();
 
 
             }
@@ -143,7 +143,7 @@ namespace CheckFenix.Core
                 url = HtmlNode.CreateNode("<iframe " + match.Value).Attributes["src"].Value.Replace("&amp;", "&");
                 try
                 {
-                    html = new Uri(url).DownloadBypassed();
+                    html = new Uri(url).DownloadCloudflare();
                     matchUrl = regex.Match(html);
                     if (matchUrl.Success)
                     {
@@ -195,7 +195,7 @@ namespace CheckFenix.Core
 
         public static IEnumerable<Capitulo> GetCapitulosHome(string urlFenix)
         {
-            HtmlDocument tDoc = new HtmlDocument().LoadUrlByPassed(urlFenix);
+            HtmlDocument tDoc = new HtmlDocument().LoadUrlCloudflare(urlFenix);
 
             return GetCapitulosHome(tDoc.DocumentNode);
         }

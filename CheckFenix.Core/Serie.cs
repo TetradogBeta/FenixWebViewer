@@ -222,7 +222,7 @@ namespace CheckFenix.Core
 
             if (!File.Exists(pathFile))
             {
-                bmp = Picture.GetBitmapBypassed();
+                bmp = Picture.GetBitmapCloudflare();
                 imgSerie =  bmp.Escala(0.35f);
                 try
                 {
@@ -259,7 +259,7 @@ namespace CheckFenix.Core
                 {
                     DicSeriesCompleto.Add(Pagina.AbsoluteUri, this);
                     DicSeriesBasico.AddOrReplace(Pagina.AbsoluteUri, this);
-                    pagina = new HtmlDocument().LoadUrlByPassed(Pagina);
+                    pagina = new HtmlDocument().LoadUrlCloudflare(Pagina);
                     nodoNombre = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("title")).FirstOrDefault();
                     nodoDesc = pagina.GetByTagName("meta").Where(m => !Equals(m.Attributes["name"], default(HtmlAttribute)) && m.Attributes["name"].Value.Equals("description")).FirstOrDefault();
                     nodoPicture = pagina.GetByClass("is-2by4").FirstOrDefault();
@@ -322,7 +322,7 @@ namespace CheckFenix.Core
         public bool UltimoEnParrilla()
         {
             
-            string tHtml = new Uri(Pagina.Host).DownloadBypassed();
+            string tHtml = new Uri(Pagina.Host).DownloadCloudflare();
             
             return tHtml.Contains(Ultimo.Pagina.AbsolutePath);
         }
@@ -363,7 +363,7 @@ namespace CheckFenix.Core
             do
             {
                 //no se puede guardar porque la pagina 1 es la más nueva ergo los indices cambian
-                tDoc = new HtmlDocument().LoadUrlByPassed(new Uri(urlBase + paginaActual));
+                tDoc = new HtmlDocument().LoadUrlCloudflare(new Uri(urlBase + paginaActual));
                 nodosSeries = tDoc.GetByClass(CLASE).ToArray();
                 if (upToDown)
                 {

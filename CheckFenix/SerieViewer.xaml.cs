@@ -48,7 +48,7 @@ namespace CheckFenix
             Bitmap getBmp;
             if (CargarImagenFull)
             {
-                getBmp = Serie.Picture.GetBitmapBypassed();
+                getBmp = Serie.Picture.GetBitmapCloudflare();
 
                 DicImgs.AddOrReplace(Serie.Picture.AbsoluteUri, getBmp.ToImageSource());
             }
